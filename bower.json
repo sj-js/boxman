@@ -1,0 +1,29 @@
+{
+  "name": "boxman",
+  "description": "boxman is javascript library to use GUI",
+  "main": "",
+  "authors": [
+    "SJ <souljungkim@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "boxMan",
+    "drag",
+    "drop",
+    "div",
+    "movable",
+    "put"
+  ],
+  "homepage": "https://github.com/souljungkim/boxman",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "crossman": "*"
+  }
+}
