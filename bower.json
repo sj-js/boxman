@@ -1,7 +1,7 @@
 {
   "name": "boxman",
   "description": "boxman is javascript library to use GUI",
-  "main": "",
+  "main": "dist/boxman.min.js",
   "authors": [
     "SJ <souljungkim@gmail.com>"
   ],
@@ -15,15 +15,18 @@
     "put"
   ],
   "homepage": "https://github.com/souljungkim/boxman",
-  "private": true,
   "ignore": [
     "**/.*",
     "node_modules",
     "bower_components",
+    "bower.json",
+    "gulpfile.js",
+    "package.json",
+    "src",
     "test",
     "tests"
   ],
-  "devDependencies": {
+  "dependencies": {
     "crossman": "*"
   }
 }
