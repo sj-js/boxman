@@ -1,9 +1,10 @@
 function BoxMan(el){
     var that = this;
-    // var getEl = this.getEl;
-    this.addedEventFuncs = {};    
-    this.objs = {};        
-    this.boxObjs = {};
+    this.addedEventFuncs = {};
+    this.globalBoxSetup = {};
+    this.globalObjSetup = {};
+    this.objs = {};
+    this.boxObjs = {};    
     this.metaObj = {
         mvObj:undefined,
         isOnDown:false,
@@ -17,14 +18,16 @@ function BoxMan(el){
             w:window.innerWidth,
             h:window.innerHeight
         },
-        isCopy:true,
+        layerOnMove:document.body,
+        isCopy:false,
         isOverwrite:false,
+        isBoxToBox:true,
         appendType:this.APPEND_TYPE_PUSH
-    };    
+    };
     window.addEventListener('load', function(event){
         that.setMaxSize();
         // getEl(document.body).disableSelection();
-        // sj.setMaxSize();    
+        // sj.setMaxSize();
         // if (!sj.isAdapted){
         //     sj.isAdapted = true;
         /** 이벤트의 중원을 맡으실 분들 **/
@@ -39,7 +42,7 @@ function BoxMan(el){
             window.addEventListener('resize', function(event){ that.whenResize(event); });
         }
         // }
-    });    
+    });
 
 }
 
@@ -55,7 +58,13 @@ BoxMan.prototype.APPEND_TYPE_PUSH = 3;
 
 
 
-
+BoxMan.prototype.set = function(type, infoObj){
+    if (type == 'box'){
+        this.globalBoxSetup = infoObj;    
+    }else if (type == 'obj'){
+        this.globalObjSetup = infoObj;        
+    }
+};
 BoxMan.prototype.detect = function(){        
     var tempEls;    
     /** 객체탐지 적용(담는 상자) **/    
@@ -270,8 +279,7 @@ BoxMan.prototype.whenMouseDown = function(event){
     return true;
 };
 
-BoxMan.prototype.objStartMove = function(event, selectedObj){
-    // var getEl = this.getEl;
+BoxMan.prototype.objStartMove = function(event, selectedObj){    
     var meta = this.metaObj;
     var mvObj;
     /*sjHelper.cross.stopPropagation(event);*/ //잠시
@@ -296,8 +304,7 @@ BoxMan.prototype.objStartMove = function(event, selectedObj){
     this.saveInfoBeforeMove(mvObj, event);    
 };
 
-BoxMan.prototype.whenMouseMove = function(event){
-    // var getEl = this.getEl;
+BoxMan.prototype.whenMouseMove = function(event){    
     var that = this;
     var meta = this.metaObj;
     var mvObj = meta.mvObj;
@@ -314,12 +321,11 @@ BoxMan.prototype.whenMouseMove = function(event){
     }
 };
 BoxMan.prototype.whenMouseUp = function (event){
-    // var getEl = this.getEl;
-    var meta = this.metaObj;    
-    var mvObjBeforeBox = meta.mvObjBeforeBox;    
+    var meta = this.metaObj;
+    var mvObjBeforeBox = meta.mvObjBeforeBox;
     var mvObj = meta.mvObj;
     /* 객체이동 준비 취소 */
-    this.removeTimer();    
+    this.removeTimer();
     /* 이동객체 상태 취소 */
     if (meta.isOnDown){
         getEl(mvObj).clas.remove('sj-obj-is-on-moving');
@@ -329,22 +335,17 @@ BoxMan.prototype.whenMouseUp = function (event){
     if (meta.isOnMoving){
         // mvObj가 이동할 박스객체 하나 선정
         var decidedBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);
+        decidedBox = (decidedBox)? decidedBox:meta.layerOnMove;
         /*** 객체 갈 곳 미리보기 지우기 ***/
         this.deletePreviewer();
         // 결정된 박스에 mvObj넣기
-        if (decidedBox != undefined){            
-            this.moveObjTo(mvObj, decidedBox);
-            return;
-        }
-        // 결정된 박스에 mvObj넣기 (밖 허가 안되면 위치 원상 복구, 허가면 이전 박스의 박스아웃 이벤트 발생)
-        var bBoxCnt = this.getMovableObjCount(mvObjBeforeBox);
-        if (mvObjBeforeBox.executeEventMustDo) mvObjBeforeBox.executeEventMustDo();
-        if (mvObjBeforeBox.executeEventBoxinout) mvObjBeforeBox.executeEventBoxinout(mvObjBeforeBox, mvObj, bBoxCnt);
-        if (mvObjBeforeBox.executeEventBoxout) mvObjBeforeBox.executeEventBoxout(mvObjBeforeBox, mvObj, bBoxCnt);        
+        // if (decidedBox != undefined){
+        this.moveObjTo(mvObj, decidedBox);
+        // }        
         // confirm mvObj is out of the Box
         // init
         mvObj = null;
-    }    
+    }
     return;
 };
 
@@ -524,23 +525,27 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
     var mvObjBeforeNextSibling = meta.mvObjBeforeNextSibling;
     var mvObjBeforePosition = meta.mvObjBeforePosition;
     var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;
-    var mvObjPreviewClone = meta.mvObjPreviewClone;
-    var canEnter = ( boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) 
-                  || boxEl.getAttribute("data-box") == '' );
-    
-    var isTreeDataBox = ( boxEl.getAttribute("data-tree-type") != undefined );    
+    var mvObjPreviewClone = meta.mvObjPreviewClone;    
+
+    var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
+    var isToBox = (boxEl != undefined);
+    var isToTree = ( isToBox 
+                  && boxEl.getAttribute("data-tree-type") != undefined );
+    var canEnter = ( isToBox 
+                  && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '') );        
     var isSameBox = ( boxEl == mvObjBeforeBox );
     var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
     var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
     var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
-    var isRollbackWithEvent = (boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));
-    var isToTree = isTreeDataBox;
+    var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
+    var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
     
-
+    var flagBeforeBoxEvent = false;
+    var flagAfterBoxEvent = false;
     var isMoved = false;
 
     // 다시 같은 상자면 원위치, 이동을 허가하지 않은 상자면 원위치
-    if ( isRollback || isRollbackWithEvent ){        
+    if ( isRollback || isRollbackWithEvent || (isNotOnlyToBox) ){        
         this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
 
     // Tree의 data-box기능이면
@@ -568,45 +573,52 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
 
     // 이동전 수행 펑션 true면 통과
     }else{  
-        if (isRollback2){
-            this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
-            return;
-        }
-        var mvTarget;
-        if (meta.isOverwrite && !isSameBox){
-            boxEl.innerHTML = '';
-        }
-        if (meta.isCopy && !isSameBox){
-            // 카피
-            var copyObj = mvObj.cloneNode(true);                                                        
-            this.setObj('', copyObj);
-            mvTarget = copyObj;
-            // 원위치
-            this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
-        }else{
-            mvTarget = mvObj;
-        }
+        if (boxEl){
+            if (isRollback2){
+                this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
+                return;
+            }
+            var mvTarget;
+            if (meta.isOverwrite && !isSameBox){
+                boxEl.innerHTML = '';
+            }        
+            if (meta.isCopy && !isSameBox){
+                // 카피
+                var copyObj = mvObj.cloneNode(true);                                                        
+                this.setObj('', copyObj);
+                mvTarget = copyObj;
+                // 원위치
+                this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
+            }else{
+                mvTarget = mvObj;
+            }
 
-        this.goTo(mvTarget, boxEl, meta.appendType, mvObjPreviewClone);
-
-        isMoved = true;
-        // 이벤트 실행(박스객체, 이동객체, 박스안 이동객체 수)
-        var boxCnt = this.getMovableObjCount(boxEl);
+            this.goTo(mvTarget, boxEl, meta.appendType, mvObjPreviewClone);
+            flagBeforeBoxEvent = true;
+            flagAfterBoxEvent = true;
+            isMoved = true;
+        }
+    }
+    // 결정된 박스에 mvObj넣기 (밖 허가 안되면 위치 원상 복구, 허가면 이전 박스의 박스아웃 이벤트 발생)
+    // 이벤트 실행(박스객체, 이동객체, 박스안 이동객체 수)
+    if ( flagBeforeBoxEvent || (!isNotOnlyToBox && isToBox) ){        
         var bBoxCnt = this.getMovableObjCount(mvObjBeforeBox);
         if (mvObjBeforeBox.executeEventMustDo) mvObjBeforeBox.executeEventMustDo();
         if (mvObjBeforeBox.executeEventBoxinout) mvObjBeforeBox.executeEventBoxinout(mvObjBeforeBox, mvObj, bBoxCnt);
-        if (mvObjBeforeBox.executeEventBoxout) mvObjBeforeBox.executeEventBoxout(mvObjBeforeBox, mvObj, bBoxCnt);
+        if (mvObjBeforeBox.executeEventBoxout) mvObjBeforeBox.executeEventBoxout(mvObjBeforeBox, mvObj, bBoxCnt);    
+    }    
+    if ( flagAfterBoxEvent ){        
+        var boxCnt = this.getMovableObjCount(boxEl);
         if (boxEl.executeEventMustDo) boxEl.executeEventMustDo();
         if (boxEl.executeEventBoxinout) boxEl.executeEventBoxinout(boxEl, mvObj, boxCnt, mvObjBeforeBox);
         if (boxEl.executeEventBoxin) boxEl.executeEventBoxin(boxEl, mvObj, boxCnt, mvObjBeforeBox);
     }    
-
     /* 초기화 */
     mvObj = null;
     return isMoved;
 };
 BoxMan.prototype.goTo = function(mvObj, boxEl, type, mvObjPreviewClone){
-     // APPEND_TYPE_LAST
+    // APPEND_TYPE_LAST
     if (type == this.APPEND_TYPE_LAST){
         boxEl.appendChild(mvObj);
     // APPEND_TYPE_FIRST
@@ -645,8 +657,7 @@ BoxMan.prototype.backToBefore = function(mvObj, boxEl, type){
 
 
 
-BoxMan.prototype.createPreviewer = function(mvObj){
-	// var getEl = this.getEl;
+BoxMan.prototype.createPreviewer = function(mvObj){	
 	var meta = this.metaObj;
 	var mvObjPreviewClone = mvObj.cloneNode(true);
     mvObjPreviewClone.setAttribute('data-movable', 'false'); //undefined, null, true, false를 지정하면 조건식에서 정상적으로 작동을 안함. 스트링으로
@@ -657,26 +668,26 @@ BoxMan.prototype.createPreviewer = function(mvObj){
     meta.mvObjPreviewClone = mvObjPreviewClone;
     meta.mvObjCloneList.push(mvObjPreviewClone);
 };
-BoxMan.prototype.setPreviewer = function(mvObj, event){	
-    // var getEl = this.getEl;
+BoxMan.prototype.setPreviewer = function(mvObj, event){	    
     var meta = this.metaObj;    
     var lastGoingToBeInThisBox = meta.lastGoingToBeInThisBox;
     var mvObjPreviewClone = meta.mvObjPreviewClone;
     var mvObjBeforeBox = meta.mvObjBeforeBox;    
     /** 가는 위치 미리 보여주기 **/
     var goingToBeInThisBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);    
-    var canEnter;    
-    var isTreeDataBox;
-    if (goingToBeInThisBox != undefined){        
-        canEnter = ( goingToBeInThisBox.getAttribute("data-box") > this.getMovableObjCount(goingToBeInThisBox) 
-                  || goingToBeInThisBox.getAttribute("data-box") == '' );
-        isTreeDataBox = ( goingToBeInThisBox.getAttribute("data-tree-type") != undefined );
-    }    
-    
-    var isSameBox = ( goingToBeInThisBox == mvObjBeforeBox );    
+    var boxEl = goingToBeInThisBox;
+
+    var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
+    var isToBox = (boxEl != undefined);    
+    var isToTree = ( isToBox 
+                  && boxEl.getAttribute("data-tree-type") != undefined );
+    var canEnter = ( isToBox 
+                  && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '' ) );    
+    var isSameBox = ( boxEl == mvObjBeforeBox );    
     var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
     var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
     var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
+    var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
 
     // 박스 밖으로 갈 예정
     if (goingToBeInThisBox == undefined){
@@ -686,7 +697,7 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     // 갈 곳 미리보기 효과 (클론 효과)
     }else{
         // Tree의 data-box기능이면 CSS효과만
-        if (isTreeDataBox){
+        if (isToTree){
             if (lastGoingToBeInThisBox) getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
             getEl(goingToBeInThisBox).clas.add('sj-tree-box-to-go');
             meta.lastGoingToBeInThisBox = goingToBeInThisBox;		
