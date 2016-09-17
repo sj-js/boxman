@@ -4,7 +4,7 @@ function BoxMan(el){
     this.globalBoxSetup = {};
     this.globalObjSetup = {};
     this.objs = {};
-    this.boxObjs = {};    
+    this.boxObjs = {};
     this.metaObj = {
         mvObj:undefined,
         isOnDown:false,
@@ -18,7 +18,8 @@ function BoxMan(el){
             w:window.innerWidth,
             h:window.innerHeight
         },
-        layerOnMove:document.body,
+        limit:2,
+        layerOnMove:undefined,
         isCopy:false,
         isOverwrite:false,
         isBoxToBox:true,
@@ -66,15 +67,15 @@ BoxMan.prototype.set = function(type, infoObj){
     }
 };
 BoxMan.prototype.detect = function(){        
-    var tempEls;    
-    /** 객체탐지 적용(담는 상자) **/    
-    tempEls = document.querySelectorAll('[data-box]');  
-    for (var j=0; j<tempEls.length; j++){        
+    var tempEls;
+    /** 객체탐지 적용(담는 상자) **/
+    tempEls = document.querySelectorAll('[data-box]');
+    for (var j=0; j<tempEls.length; j++){
         this.addBox(tempEls[j]);
     }    
-    /** 객체탐지 적용(상자 끌기) **/    
-    tempEls = document.querySelectorAll('[data-movable]');  
-    for (var j=0; j<tempEls.length; j++){        
+    /** 객체탐지 적용(상자 끌기) **/
+    tempEls = document.querySelectorAll('[data-obj]');
+    for (var j=0; j<tempEls.length; j++){
         this.addObj(tempEls[j]);
     }
 };
@@ -96,76 +97,94 @@ BoxMan.prototype.execEvent = function(eventNm, event){
 
 
 BoxMan.prototype.addBox = function(el){
-    this.setBox('', el);    
+    if (el.getAttribute('data-box') == null && el.getAttribute('data-box') == undefined) el.setAttribute('data-box', '');
+    var infoObj = {
+        id:el.getAttribute('data-box-id'),
+        limit:el.getAttribute('data-limit'),
+        acceptList:el.getAttribute('data-accept-list'),
+        rejectList:el.getAttribute('data-reject-list'),
+        beforeboxin:el.getAttribute('data-event-beforeboxin'),
+        boxinout:el.getAttribute('data-event-boxinout'),
+        start:el.getAttribute('data-event-start'),
+        boxin:el.getAttribute('data-event-boxin'),
+        boxout:el.getAttribute('data-event-boxout'),
+    };
+    this.setBox(el, infoObj);
 };
 BoxMan.prototype.newBox = function(infoObj, parentEl){
-    var that = this;
-    var o = (infoObj)? infoObj:{};
+    var newEl = getNewEl('div', '', '', {'data-box':'true'}, '');
     parentEl = (parentEl)? parentEl:document.body;
-    // 객체 생성
-    var newEl = getNewEl('div', '', '', {'data-box':'true'}, '');    
-    // 특정정보는 Element를 설정함
-    if (o){
-        if (o.imgURL) newEl.style.background = 'url("'+ o.imgURL +'")';
-        if (o.width && o.height) newEl.style.backgroundSize = o.width+' '+o.height;
-        if (o.width) newEl.style.width = o.width;
-        if (o.height) newEl.style.height = o.height;
-        if (o.content) newEl.innerHTML = o.content;        
-    }
-    return this.setBox('', newEl, infoObj, parentEl);    
+    return this.setBox(newEl, infoObj, parentEl);
 };
-BoxMan.prototype.setBox = function(id, el, infoObj, parentEl){    
+BoxMan.prototype.setBox = function(el, infoObj, parentEl){    
+    infoObj = (infoObj)? infoObj:{};
     if (el.isAdaptedBox){
         return false;
     }else{
         el.isAdaptedBox = true;
         getEl(el).clas.add('sj-obj-box');
-    }    
+    }
     // 적용시작
     var that = this;
-    var boxObjs = this.boxObjs;    
+    var boxObjs = this.boxObjs;
     // ID 적용
-    id = (id) ? id : getEl(boxObjs).getNewSeqId('tmp');    
-    this.boxObjs[id] = {
-        el:el,
-        info:(infoObj) ? infoObj : {}
-    };    
-    // 추가
-    if (parentEl) getEl(parentEl).add(el);
+    var id = (infoObj.id)? infoObj.id : getEl(boxObjs).getNewSeqId('tmp');
+    el.boxid = id;
+    this.boxObjs[id] = infoObj;
+    this.boxObjs[id].el = el;
+    this.boxObjs[id].id = id;
 
-    if (el.getAttribute('data-box') == null && el.getAttribute('data-box') == undefined) el.setAttribute('data-box', '');
-
-    /* DOM에서 이벤트 등록 */
-    var eventFn = el.getAttribute('data-event-beforeboxin');
-    if (eventFn != null && eventFn != undefined){
+    // Element 설정
+    var g = this.globalBoxSetup;
+    var o = (infoObj)? infoObj:{};
+    for (var gNm in g){
+        if (!o[gNm]) o[gNm] = g[gNm];
+    }
+    if (o){
+        if (o.imgURL) el.style.background = 'url("'+ o.imgURL +'")';
+        if (o.width && o.height) el.style.backgroundSize = o.width+' '+o.height;
+        if (o.width) el.style.width = o.width;
+        if (o.height) el.style.height = o.height;
+        if (o.content) el.innerHTML = o.content;
+    } 
+    // DOM에 추가   
+    if (parentEl) getEl(parentEl).add(el);    
+    // Event 추가
+    if (o.beforeboxin){
         el.executeEventBeforeboxin = new Function('box', 'obj', 'boxsize', eventFn);
-    }
-    /**/
-    var eventFn = el.getAttribute('data-event-boxinout');
-    if (eventFn != null && eventFn != undefined){
+    }    
+    if (o.beforeboxinout){
         el.executeEventBoxinout = new Function('box','obj','boxSize', 'boxBefore', eventFn);
-    }
-    /**/
-    var eventFn = el.getAttribute('data-event-start');
-    if (eventFn != null && eventFn != undefined){
+    }    
+    if (o.start){
         el.executeEventStart = new Function('box','obj','boxSize', eventFn);
         el.executeEventStart(obj, undefined, this.getMovableObjCount(obj));
-    }
-    /**/
-    var eventFn = el.getAttribute('data-event-boxin');
-    if (eventFn != null && eventFn != undefined){
+    }    
+    if (o.boxin){
         el.executeEventBoxin = new Function('box','obj','boxSize', 'boxBefore', eventFn);
     }
-    /**/
-    var eventFn = el.getAttribute('data-event-boxout');
-    if (eventFn != null && eventFn != undefined){
+    if (o.boxout){
         el.executeEventBoxout = new Function('box','obj','boxSize', eventFn);
-    }
-    
+    }    
     return id;
 };
-BoxMan.prototype.getBox = function(id){
+BoxMan.prototype.getBox = function(param){    
+    if (typeof param == 'string'){        
+        return this.getBoxById(param);
+    }else{        
+        return this.getBoxByEl(param);
+    }    
+};
+BoxMan.prototype.getBoxById = function(id){
     return this.boxObjs[id];
+};
+BoxMan.prototype.getBoxByEl = function(el){
+    var boxObjs = this.boxObjs;    
+    if (el && el.boxid){
+        var boxid = el.boxid;        
+        var boxObj = boxObjs[boxid];
+        return boxObj;        
+    }    
 };
 
 
@@ -177,25 +196,18 @@ BoxMan.prototype.getBox = function(id){
 
 
 BoxMan.prototype.addObj = function(el){
-    this.setObj('', el);
+    var infoObj = {
+        objid:el.getAttribute('data-obj-id')
+    };    
+    this.setObj(el, infoObj);
 };
-BoxMan.prototype.newObj = function(infoObj, parentEl){
-    var that = this;
-    var o = (infoObj)? infoObj:{};    
-    // 객체 생성
-    var newEl = getNewEl('div', '', '', {'data-movable':'true'}, '');    
-    // 특정정보는 Element를 설정함
-    if (o){
-        if (o.imgURL) newEl.style.background = 'url("'+ o.imgURL +'")';
-        if (o.width && o.height) newEl.style.backgroundSize = o.width+' '+o.height;
-        if (o.width) newEl.style.width = o.width;
-        if (o.height) newEl.style.height = o.height;
-        if (o.content) newEl.innerHTML = o.content;        
-    }    
-    if (!parentEl) parentEl = document.body;
-    return this.setObj('', newEl, infoObj, parentEl);
+BoxMan.prototype.newObj = function(infoObj, parentEl){    
+    var newEl = getNewEl('div', '', '', {'data-obj':'true'}, '');    
+    parentEl = (parentEl)? parentEl:document.body;
+    return this.setObj(newEl, infoObj, parentEl);
 };
-BoxMan.prototype.setObj = function(id, el, infoObj, parentEl){    
+BoxMan.prototype.setObj = function(el, infoObj, parentEl){    
+    infoObj = (infoObj)? infoObj:{};    
     if (el.isAdaptedMovable){
         return false;
     }else{
@@ -206,21 +218,36 @@ BoxMan.prototype.setObj = function(id, el, infoObj, parentEl){
     var that = this;
     var objs = this.objs;    
     // ID 적용
-    id = (id) ? id : getEl(objs).getNewSeqId('tmp');    
-    this.objs[id] = {
-        el:el,
-        info:(infoObj) ? infoObj : {}
-    };   
+    var id = (infoObj.id)? infoObj.id : getEl(objs).getNewSeqId('tmp');
+    el.objid = id;
+    this.objs[id] = infoObj;
+    this.objs[id].el = el;
+    this.objs[id].id = id;
+        
+    // Element 설정
+    var g = this.globalObjSetup;    
+    var o = (infoObj)? infoObj:{};
+    for (var gNm in g){
+        if (!o[gNm]) o[gNm] = g[gNm];
+    }
+    if (o){
+        if (o.imgURL) el.style.background = 'url("'+ o.imgURL +'")';
+        if (o.width && o.height) el.style.backgroundSize = o.width+' '+o.height;
+        if (o.width) el.style.width = o.width;
+        if (o.height) el.style.height = o.height;
+        if (o.content) el.innerHTML = o.content;        
+    }
+    el.style.left = el.offsetLeft + 'px';
+    el.style.top = el.offsetTop + 'px';       
+    // DOM에 추가
+    if (parentEl) getEl(parentEl).add(el);
+    // Event 추가
     if (this.isMobile()){
         getEl(el).addEventListener('touchstart', function(event){ that.objStartMove(event, el); });
     }else{
         getEl(el).addEventListener('mousedown', function(event){ that.objStartMove(event, el); });
     }
     getEl(el).addEventListener('click', function(){});
-    el.style.left = el.offsetLeft + 'px';
-    el.style.top = el.offsetTop + 'px';    
-    // 추가
-    if (parentEl) getEl(parentEl).add(el);
     return id;
 };
 BoxMan.prototype.getObj = function(id){
@@ -290,11 +317,11 @@ BoxMan.prototype.objStartMove = function(event, selectedObj){
     // 임시방편 : 파이어폭스에서 스크롤로직이 안되더라도  preventDefault를 실행하기
     // 파이어폭스의 특수성 때문에 따로 이벤트 처리 / ★현재 파이어폭스에서만 무빙객체의 이동취소 후 스크롤 시키는 로직이 안됨!!!ㅠ
     if (navigator.userAgent.indexOf('Firefox') != -1) event.preventDefault();
-    /* ★ IE8에서 이벤트 넣어줄때 this라고 쓴 부분에서 윈도우 객체를 잡아다 보낸다. 그럼 NONO 할 수 없이 srcElement를 쓰고 부모님에게 묻고 물어서 data-movable가능하신지 여쭈어서 찾는다.*/
+    /* ★ IE8에서 이벤트 넣어줄때 this라고 쓴 부분에서 윈도우 객체를 잡아다 보낸다. 그럼 NONO 할 수 없이 srcElement를 쓰고 부모님에게 묻고 물어서 data-obj가능하신지 여쭈어서 찾는다.*/
     if (selectedObj != window){
         mvObj = selectedObj;
     }else{
-        var searchMovableObj = getEl(event.target).getParentEl('data-movable');
+        var searchMovableObj = getEl(event.target).getParentEl('data-obj');
         if (searchMovableObj) mvObj = searchMovableObj;
     }
     meta.mvObj = mvObj;
@@ -419,7 +446,7 @@ BoxMan.prototype.getMovableObjCount = function(box){
     var boxSize = 0;
     if (box){
         for (var j=0; j<box.children.length; j++){
-            var isMovableObj = box.children[j].getAttribute('data-movable');
+            var isMovableObj = box.children[j].getAttribute('data-obj');
             if (isMovableObj != null && isMovableObj != undefined && isMovableObj != 'false'){
                 boxSize++;
             }
@@ -431,8 +458,8 @@ BoxMan.prototype.getMovableObj = function(box, event){
     if (box){        
         for (var j=0; j<box.children.length; j++){
             var obj = box.children[j];
-            var isMovableObj = obj.getAttribute('data-movable');
-            var isMovablePreviewer = obj.getAttribute('data-movable-previewer');
+            var isMovableObj = obj.getAttribute('data-obj');
+            var isMovablePreviewer = obj.getAttribute('data-obj-previewer');
             if (isMovablePreviewer != null 
             || (isMovableObj != null && isMovableObj != undefined && isMovableObj != 'false')){                
                 var offset = this.getBodyOffset(obj);                
@@ -520,32 +547,48 @@ BoxMan.prototype.setMovingState = function(mvObj){
     meta.isOnMoving = true;
 };
 BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
-    var meta = this.metaObj;
+    var meta = this.metaObj;    
     var mvObjBeforeBox = meta.mvObjBeforeBox;
     var mvObjBeforeNextSibling = meta.mvObjBeforeNextSibling;
     var mvObjBeforePosition = meta.mvObjBeforePosition;
     var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;
-    var mvObjPreviewClone = meta.mvObjPreviewClone;    
-
-    var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
-    var isToBox = (boxEl != undefined);
+    var mvObjPreviewClone = meta.mvObjPreviewClone;
+    var bfObj = this.getBox(mvObjBeforeBox);
+    var afObj = this.getBox(boxEl);   
+    
+    var isFromBox = (bfObj != undefined);
+    var isToBox = (afObj != undefined);
     var isToTree = ( isToBox 
                   && boxEl.getAttribute("data-tree-type") != undefined );
     var canEnter = ( isToBox 
-                  && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '') );        
-    var isSameBox = ( boxEl == mvObjBeforeBox );
+                  && ( afObj.limit > this.getMovableObjCount(boxEl) || afObj.limit == undefined) );
+    var isSameBox = ( bfObj == afObj );
     var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
     var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
     var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
     var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
     var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
+    var isAccepted = ( !isToBox || this.isAccepted(bfObj, afObj.acceptList, afObj.rejectList) );
+
+    // var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
+    // var isToBox = (boxEl != undefined);
+    // var isToTree = ( isToBox 
+    //               && boxEl.getAttribute("data-tree-type") != undefined );
+    // var canEnter = ( isToBox 
+    //               && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '') );
+    // var isSameBox = ( boxEl == mvObjBeforeBox );
+    // var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
+    // var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
+    // var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
+    // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
+    // var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
     
     var flagBeforeBoxEvent = false;
     var flagAfterBoxEvent = false;
     var isMoved = false;
 
     // 다시 같은 상자면 원위치, 이동을 허가하지 않은 상자면 원위치
-    if ( isRollback || isRollbackWithEvent || (isNotOnlyToBox) ){        
+    if ( isRollback || isRollbackWithEvent || isNotOnlyToBox || !isAccepted){
         this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
 
     // Tree의 data-box기능이면
@@ -660,8 +703,8 @@ BoxMan.prototype.backToBefore = function(mvObj, boxEl, type){
 BoxMan.prototype.createPreviewer = function(mvObj){	
 	var meta = this.metaObj;
 	var mvObjPreviewClone = mvObj.cloneNode(true);
-    mvObjPreviewClone.setAttribute('data-movable', 'false'); //undefined, null, true, false를 지정하면 조건식에서 정상적으로 작동을 안함. 스트링으로
-    mvObjPreviewClone.setAttribute('data-movable-previewer', 'true'); 
+    mvObjPreviewClone.setAttribute('data-obj', 'false'); //undefined, null, true, false를 지정하면 조건식에서 정상적으로 작동을 안함. 스트링으로
+    mvObjPreviewClone.setAttribute('data-obj-previewer', 'true'); 
     getEl(mvObjPreviewClone).clas.add('sj-preview-going-to-be-in-box');
     mvObjPreviewClone.style.position = "";
     /* ie브라우저를 벗어나서 mouseup이벤트가 발생하지 않는 것 때문에 클론이 지워지지 않는 것 방지 */
@@ -676,49 +719,66 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     /** 가는 위치 미리 보여주기 **/
     var goingToBeInThisBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);    
     var boxEl = goingToBeInThisBox;
+    var bfObj = this.getBox(mvObjBeforeBox);
+    var afObj = this.getBox(boxEl);   
 
-    var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
-    var isToBox = (boxEl != undefined);    
+    var isFromBox = (bfObj != undefined);
+    var isToBox = (afObj != undefined);
     var isToTree = ( isToBox 
                   && boxEl.getAttribute("data-tree-type") != undefined );
     var canEnter = ( isToBox 
-                  && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '' ) );    
-    var isSameBox = ( boxEl == mvObjBeforeBox );    
+                  && ( afObj.limit > this.getMovableObjCount(boxEl) || afObj.limit == undefined) );
+    var isSameBox = ( bfObj == afObj );
     var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
     var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
     var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
+    var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
     var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
+    var isAccepted = ( !isToBox || this.isAccepted(bfObj, afObj.acceptList, afObj.rejectList) );
 
-    // 박스 밖으로 갈 예정
-    if (goingToBeInThisBox == undefined){
+    // var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
+    // var isToBox = (boxEl != undefined);
+    // var isToTree = ( isToBox 
+    //               && boxEl.getAttribute("data-tree-type") != undefined );
+    // var canEnter = ( isToBox 
+    //               && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '') );
+    // var isSameBox = ( boxEl == mvObjBeforeBox );
+    // var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
+    // var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
+    // var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
+    // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
+    // var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
+
+    // 갈 곳 미리보기 효과 (클론 효과)    
+    // Tree의 data-box기능이면 CSS효과만
+    if (isToTree){
         if (lastGoingToBeInThisBox) getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
-        if (mvObjPreviewClone.parentNode) mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+        getEl(goingToBeInThisBox).clas.add('sj-tree-box-to-go');
+        meta.lastGoingToBeInThisBox = goingToBeInThisBox;		
     
-    // 갈 곳 미리보기 효과 (클론 효과)
-    }else{
-        // Tree의 data-box기능이면 CSS효과만
-        if (isToTree){
-            if (lastGoingToBeInThisBox) getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
-            getEl(goingToBeInThisBox).clas.add('sj-tree-box-to-go');
-            meta.lastGoingToBeInThisBox = goingToBeInThisBox;		
-        
-        }else{
-            // 원위치로 지정    
-            if (isRollback){
-                this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, meta.appendType);
-                meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+    }else{        
+        // 원위치로 지정    
+        if (isRollback || isNotOnlyToBox || !isAccepted){
+            this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, meta.appendType);
+            meta.lastGoingToBeInThisBox = goingToBeInThisBox;
 
-			// 갈 예정인 박스안 지정
-            }else{
+		// 갈 예정인 박스안 지정
+        }else{
+            if (boxEl){        
                 if (isRollback2){
                     this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, meta.appendType);
                     return;
                 }
                 this.goTo(mvObjPreviewClone, goingToBeInThisBox, meta.appendType, mvObjPreviewClone);
                 meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+            }else{
+                // 박스 밖으로 갈 예정
+                if (lastGoingToBeInThisBox) getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
+                if (mvObjPreviewClone.parentNode) mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
             }
-        }
+        }        
     }
+    
 };
 BoxMan.prototype.deletePreviewer = function(){
 	// var getEl = this.getEl;
@@ -905,205 +965,67 @@ BoxMan.prototype.removeTimer = function(){
     clearTimeout(meta.timer);
     meta.timerTime = 0;      
 };
+BoxMan.prototype.isAccepted = function(item, acceptList, rejectList){
+    // 간단 버전
+    var isOk = false;    
+    if (acceptList && acceptList.length > 0){
+        if (this.find(item, acceptList)){
+            isOk = true;
+        }
+    }else{
+        isOk = true;
+    }
+    if (rejectList && rejectList.length > 0){
+        if (this.find(item, rejectList)){
+            isOk = false;
+        }
+    }
+    return isOk;
+};
+
+
+
+// Param==Array => Or조건
+// Param==Object => 해당조건
+BoxMan.prototype.getMatchedObjWithParam = function(obj, param){
+    if (typeof param == 'string'){        
+        param = {id:param};
+    }
+    if (param instanceof Array){        
+        for (var i=0; i<param.length; i++){            
+            if (this.find(obj, param[i])) return obj;
+        }
+        return;
+    }
+    if (param instanceof Object){        
+        var keys = Object.keys(param);        
+        for (var i=0; i<keys.length; i++){
+            var key = keys[i];
+            if ( !(obj[key] && obj[key] == param[key]) ){
+                return;
+            }
+        }              
+        return obj;
+    }    
+};
+BoxMan.prototype.find = function(obj, param){    
+    if (obj instanceof Array){
+        var results = [];
+        for (var i=0; i<obj.length; i++){            
+            var matchedObj = this.getMatchedObjWithParam(obj[i], param);
+            if (matchedObj) 
+                results.push(matchedObj);
+        }        
+        return results;
+    }
+    if (obj instanceof Object){ 
+        var matchedObj = this.getMatchedObjWithParam(obj, param);
+        return matchedObj;
+    }        
+};
 
 
 
 
 
 
-
-
-
-
-
-
-/*************************
- * getEl
- * do cross browsing
- *************************/
-// BoxMan.prototype.getNewEl = function(elNm, id, classNm, attrs, inner, eventNm, eventFunc){	
-// 	var newEl = document.createElement(elNm);	// HTML객체 생성
-// 	if (id) newEl.id = id;								// 아이디	
-// 	if (classNm) newEl.setAttribute('class', classNm);		// 클래스 
-// 	for (var attrNm in attrs){ newEl.setAttribute(attrNm, attrs[attrNm]); }	// 속성	
-// 	if (inner) newEl.innerHTML = inner;			// 안 값	
-// 	if (eventNm) getEl(newEl).addEventListener(eventNm, function(event){ eventFunc(event); });	// 이벤트
-// 	return newEl;								// 반환 
-// };
-
-// BoxMan.prototype.getEl = function(id){
-
-//     var querySelectorAll = function(selector){
-//         if (document.querySelectorAll){
-//             // return document.querySelectorAll(selector);
-//             return document.getElementById(selector);
-//         }else if (document.getElementsByTagName){
-//             /* Attribute */         
-//             var startIdx = selector.indexOf('[');
-//             var endIdx = selector.indexOf(']');
-//             var attr;
-//             var selectedList = [];
-//             if (startIdx != -1 && endIdx != -1){
-//                 attr = selector.substring(startIdx +1, endIdx);
-//                 /* 유효성검사에 맞는 Form 태그 들만 */
-//                 var nodeNames = ['div', 'span', 'form', 'input', 'select', 'textarea'];
-//                 for (var searchI=0; searchI< nodeNames.length; searchI++){
-//                     var elements = document.getElementsByTagName(nodeNames[searchI]);                   
-//                     for (var searchJ=0; searchJ<elements.length; searchJ++){                        
-//                         if (elements[searchJ].getAttribute(attr) != undefined){
-//                             selectedList.push(elements[searchJ]);
-//                         }
-//                     }
-//                 }
-//             }
-//             return selectedList;        
-//         }
-//     };  
-    
-    
-//     var el = (typeof id == 'object') ? id : document.getElementById(id);    
-//     // var el = (typeof id == 'object') ? id : querySelectorAll(id);    
-//     this.obj = el;  
-
-//     this.attr = function(key, val){ 
-//         if (val){
-//             el.setAttribute(key, val); 
-//             return this;
-//         }else{
-//             return el.getAttribute(key);
-//         }       
-//     };
-//     this.clas = (function(){
-//         var classFuncs = {
-//             has: function(classNm){
-//                 return (el.className.indexOf(classNm) != -1);                   
-//             },
-//             add: function(classNm){
-//                 if (el.classList){
-//                     el.classList.add(classNm);
-//                 }else{
-//                     el.className += ' ' +classNm+ ' ';
-//                 }
-//                 return classFuncs;
-//             },
-//             remove: function(classNm){
-//                 if (el.classList){
-//                     el.classList.remove(classNm);
-//                 }else{                  
-//                     var classList = el.className.split(' ');                    
-//                     while (classList.indexOf(classNm) != -1){
-//                         classList.splice(classList.indexOf(classNm), 1);                        
-//                     }
-//                     el.className = classList.join(' ');
-//                 }
-//                 return classFuncs;
-//             }
-//         };
-//         return classFuncs;
-//     }());
-//     this.findEl = function(attr, val){
-//         var subEls = el.children;
-//         for (var i=0; i<subEls.length; i++){
-//             if (subEls[i].getAttribute(attr) == val) return subEls[i];          
-//         }                   
-//     };
-//     this.findParentEl = function(attr, val){
-//         var foundEl;
-//         var parentEl = el;      
-//         while(parentEl){
-//             if (parentEl != document.body.parentNode){
-//                 if (parentEl.getAttribute(attr) == val){
-//                     foundEl = parentEl;
-//                     break;              
-//                 }
-//             }else{
-//                 foundEl = null;
-//                 break;
-//             }
-//             parentEl = parentEl.parentNode;
-//         }       
-//         return foundEl;
-//     };
-//     this.add = function(appender){
-//         if (typeof appender == 'object') 
-//             el.appendChild(appender);
-//         else 
-//             el.innerHTML += appender;
-//         return this;
-//     };
-//     this.addln = function(appender){        
-//         if (typeof appender == 'object')
-//             el.appendChild(appender);
-//         else
-//             el.innerHTML += (appender) ? appender : '';     
-//         el.appendChild(document.createElement('br'));
-//         return this;
-//     };
-//     this.hasEventListener = function(eventNm){
-//         return el.hasEventListener(eventNm);
-//     };
-//     this.removeEventListener = function(eventNm, fn){
-//         el.removeEventListener(eventNm, fn);
-//         return this;
-//     };
-//     this.addEventListener = function(eventNm, fn){      
-//         /* FireFox는 이 작업을 선행하게 하여 window.event객체를 전역으로 돌려야한다.*/
-//         if (navigator.userAgent.indexOf('Firefox') != -1){  
-//             el.addEventListener(eventNm, function(e){window.event=e;}, true);
-//         }       
-//         /* 일반 */
-//         if (el.addEventListener){           
-//             el.addEventListener(eventNm, function(event){
-//                 fn(event);
-//                 // fn(event, getEventTarget(event)); 
-//             });     
-//         /* 옛 IE */
-//         }else{                      
-//             el.attachEvent('on'+eventNm, function(event){               
-//                 if (!event.target && event.srcElement) event.target = event.srcElement;
-//                 fn(event);
-//                 // fn(event, getEventTarget(event)); 
-//             });         
-//         }
-//         return;
-//     };  
-//     this.del = function(removeElObj){
-//         el.removeChild(removeElObj);
-//         return this;
-//     };
-//     this.html = function(innerHTML){
-//         el.innerHTML = innerHTML;
-//         return this;
-//     };  
-//     this.clear = function(){
-//         el.innerHTML = '';
-//         return this;
-//     };
-//     this.scrollDown = function(){
-//         el.scrollTop = el.scrollHeight;
-//         return this;
-//     };
-//     this.hideDiv = function(){          
-//         el.style.display = 'block';
-//         el.style.position = 'absolute';
-//         el.style.left = '-5555px';
-//         el.style.top = '-5555px';
-//         return this;
-//     };
-//     this.showDiv = function(){      
-//         el.style.display = 'block';
-//         el.style.position = 'absolute';
-//         el.style.left = '0px';
-//         el.style.top = '0px';       
-//         return this;        
-//     };
-//     this.getNewSeqId = function (idStr){        
-//         for (var seq=1; seq < 50000; seq++){
-//             var searchEmptyId = idStr + seq
-//             if (!(searchEmptyId in el)) return searchEmptyId;
-//         }       
-//         return null;
-//     };
-
-//     return this;
-// }
