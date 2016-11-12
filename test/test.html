@@ -24,22 +24,34 @@
 
 	<head>
 		<!-- <link rel=stylesheet href="./css/css.min.css">				 -->
-		<style>
-			div[data-box], div[data-obj] {
-				border:1px solid;
-				background:#DDDDDD;
-			}
+
+		
+		<style>		
 			button {
 				width:100px; height:50px ;
 			}
 		</style>
 		
+		<link rel=stylesheet href="./../src/css/boxman.css">
 		<script type=text/javascript src="./../src/bower_components/crossman/dist/js/crossman.js"></script>
 		<script type=text/javascript src="./../src/js/boxman.js"></script>
 		
 		<script>
 			var boxMan =  new BoxMan();			
 			window.onload = function(event){
+				boxMan.addEventListener('drop', function(event){
+					var files = event.exbox.files;
+					for (var i=0; i<files.length; i++){
+						var file = files[i];
+						var filePath = null;						
+						fileExtractor.getObjFromFile(file, filePath, function(content){
+					    	boxMan.newObj({
+					    		content: content, 
+					    		type: file.type ? file.type : ''
+					    	});
+						});
+					}
+				});
 				boxMan.detect();
 			};
 		</script>
@@ -47,11 +59,17 @@
 
 
 
-	<body>
+	<body class="boxman-1">
 		<button onclick="boxMan.newObj({content:'hi'})"></button>
-		<div data-box data-type="">
-			하하하하
+
+		<div data-exbox="console.log(123);" data-type="">
+			
+			히히히
+			히힣
+			히히
+
 		</div>
+
 
 		<div data-box data-type="">
 			하하하하
@@ -61,19 +79,23 @@
 			하하하하
 		</div>
 
-		<div data-box data-type="">
+		<div data-box data-type="" data-box-id="hoi">
 			하하하하
 		</div>
 
-		<div data-box data-type="" data-reject-list="tmp1">
+		<div data-box data-type="" data-reject-box='hi , hoi,hai'>
 			하하하하
 		</div>
 
-		<div data-box data-limit="1">
+		<div data-box data-type="" data-reject-box='[{"id":"hi"}, {"limit":5}]'>
+			하하하하
+		</div>
+
+		<div data-box data-box-id="hi" data-limit="1">
 			하1
 		</div>
 
-		<div data-box data-box-id="hi" data-limit="5">
+		<div data-box data-limit="5">
 			하5
 		</div>	
 
