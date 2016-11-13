@@ -665,7 +665,8 @@ BoxMan.prototype.addBox = function(el){
 BoxMan.prototype.newBox = function(infoObj){
     var newEl = getNewEl('div', '', '', {'data-box':'true'}, '');
     parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
-    return this.setBox(newEl, infoObj, parentEl);
+    this.setBox(newEl, infoObj, parentEl);
+    return newEl;    
 };
 BoxMan.prototype.setBox = function(el, infoObj, parentEl){    
     infoObj = (infoObj)? infoObj:{};
@@ -754,7 +755,8 @@ BoxMan.prototype.addExBox = function(el){
 BoxMan.prototype.newExBox = function(infoObj){
     var newEl = getNewEl('div', '', '', {'data-exbox':'true'}, '');
     parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
-    return this.setBox(newEl, infoObj, parentEl);
+    this.setBox(newEl, infoObj, parentEl);
+    return newEl;
 };
 BoxMan.prototype.setExBox = function(el, infoObj, parentEl){    
     infoObj = (infoObj)? infoObj:{};
@@ -865,7 +867,8 @@ BoxMan.prototype.addObj = function(el){
 BoxMan.prototype.newObj = function(infoObj){    
     var newEl = getNewEl('div', '', '', {'data-obj':'true'}, '');    
     parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
-    return this.setObj(newEl, infoObj, parentEl);
+    this.setObj(newEl, infoObj, parentEl);
+    return newEl;
 };
 BoxMan.prototype.setObj = function(el, infoObj, parentEl){    
     infoObj = (infoObj)? infoObj:{};    
