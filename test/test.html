@@ -44,7 +44,7 @@
 					for (var i=0; i<files.length; i++){
 						var file = files[i];
 						var filePath = null;						
-						fileExtractor.getObjFromFile(file, filePath, function(content){
+						fileExtractor.getObjFromFile(file, filePath, function(content){				
 					    	boxMan.newObj({
 					    		content: content, 
 					    		type: file.type ? file.type : ''
