@@ -36,9 +36,9 @@ var fileSuffix = '.min';
 var paths = {
 	"src":{
 		"js"	: [	
-					,src+'/bower_components/crossman/dist/js/crossman.js'					
-					,src+'/lib/**/*.js'
+					src+'/lib/**/*.js'
 					,src+'/js/**/*.js'
+					// ,src+'/bower_components/crossman/dist/js/crossman.js'					
 		],		
 		"css"	: [
 					src+'/bower_components/**/*.css'
