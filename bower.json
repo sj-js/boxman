@@ -2,18 +2,9 @@
   "name": "boxman",
   "description": "boxman is javascript library to use GUI",
   "main": "dist/boxman.min.js",
-  "authors": [
-    "SJ <souljungkim@gmail.com>"
-  ],
+  "authors": ["SJ <souljungkim@gmail.com>"],
   "license": "MIT",
-  "keywords": [
-    "boxMan",
-    "drag",
-    "drop",
-    "div",
-    "movable",
-    "put"
-  ],
+  "keywords": ["boxman", "drag", "drop", "div", "movable", "put"],
   "homepage": "https://github.com/souljungkim/boxman",
   "ignore": [
     "**/.*",

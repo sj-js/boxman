@@ -1,35 +1,50 @@
-function BoxMan(el){
+function BoxMan(setupObj){
     var that = this;
-    this.addedEventFuncs = {};
-    this.globalObjSetup = {};
-    this.globalBoxSetup = {};
-    this.globalExBoxSetup = {};    
+
+    this.globalSetup = {
+        modeCopy:false,
+        modeOnlyBoxToBox:true,
+        modeRemoveOutOfBox:false,
+        appendType:BoxMan.APPEND_TYPE_SWAP
+    }
+    this.globalSetupForBox = {};
+    this.globalSetupForObj = {};
+    this.globalSetupForExBox = {};
+
     this.objs = {};
     this.boxObjs = {};
     this.exBoxObjs = {};
+
+    this.afterDetectFuncList = [];
+    this.addedEventFuncs = {};
     this.metaObj = {
-        mvObj:undefined,        
+        mvObj:undefined,
         isOnDown:false,
         isOnMoving:false,
         lastPosX:0,
         lastPosY:0,
         mvObjPreviewClone:undefined,
+        mvObjPreviewOriginalClone:undefined,
         mvObjStartBodyOffset:undefined,
         mvObjCloneList:[],
+        mvObjOriginalShelterList:[],
         cam:{
             w:window.innerWidth,
             h:window.innerHeight
         },
         limit:2,
         layerOnMove:undefined,
-        isCopy:false,
-        isOverwrite:false,
-        isBoxToBox:true,
-        appendType:this.APPEND_TYPE_PUSH
+        mode:new BoxManMode(this.globalSetup)
     };
-    window.addEventListener('load', function(event){
+    if (setupObj)
+        this.set(setupObj);
+
+    getEl().ready(function(){
+        getEl().resize(function(){
+            that.setMaxSize();
+        });
         that.setMaxSize();
-        // getEl(document.body).disableSelection();        
+        // getEl(document.body).disableSelection();
         /** 이벤트의 중원을 맡으실 분들 **/
         if (that.isMobile()){
             getEl(document).addEventListener('touchstart', function(event){ that.whenMouseDown(event); });
@@ -39,63 +54,82 @@ function BoxMan(el){
             getEl(document).addEventListener('mousedown', function(event){ that.whenMouseDown(event); });
             getEl(document).addEventListener('mousemove', function(event){ that.whenMouseMove(event); });
             getEl(document).addEventListener('mouseup', function(event){ that.whenMouseUp(event); });
-            window.addEventListener('resize', function(event){ that.whenResize(event); });
         }
-        // }
     });
-    window.addEventListener('resize', function(event){
-        that.setMaxSize();
-    });
-
+    return this;
 }
 
 
 
 
 
-BoxMan.prototype.APPEND_TYPE_LAST = 1;
-BoxMan.prototype.APPEND_TYPE_FIRST = 2;
-BoxMan.prototype.APPEND_TYPE_PUSH = 3;
+BoxMan.APPEND_TYPE_LAST = 1;
+BoxMan.APPEND_TYPE_FIRST = 2;
+BoxMan.APPEND_TYPE_BETWEEN = 3;
+BoxMan.APPEND_TYPE_OVERWRITE = 4;
+BoxMan.APPEND_TYPE_SWAP = 5;
+BoxMan.APPEND_TYPE_INVISIBLE = 6;
 
 
 
 
 
-BoxMan.prototype.set = function(type, infoObj){
-    if (type == 'box'){
-        this.globalBoxSetup = infoObj;    
-    }else if (type == 'exbox '){
-        this.globalExBoxSetup = infoObj;
-    }else if (type == 'obj'){
-        this.globalObjSetup = infoObj;        
+BoxMan.prototype.set = function(setupObj){
+    for (var objName in setupObj){
+        this.globalSetup[objName] = setupObj[objName];
     }
 };
-BoxMan.prototype.new = function(type, infoObj){
-    if (type == 'box'){
-        this.newBox(infoObj);
-    }else if (type == 'exbox'){
-        this.newExBox(infoObj);
-    }else if (type == 'obj'){
-        this.newObj(infoObj);
+BoxMan.prototype.clone = function(param){
+    var el = getEl(param).obj
+    var copyEl = el.cloneNode(true);
+    var originalInfo;
+    var copyInfo = {};
+    if (el.getAttribute('data-box') != null){
+        originalInfo = this.getBoxByManId(el.manid);
+    }else if (el.getAttribute('data-obj') != null){
+        originalInfo = this.getObjByManId(el.manid);
+    }else if (el.getAttribute('data-exbox') != null){
+        originalInfo = this.getExBoxByManId(el.manid);
     }
+    for (var filedName in originalInfo){
+        copyInfo[filedName] = originalInfo[filedName];
+    }
+    this.setObj(copyEl, copyInfo);
+    return copyEl;
 };
-BoxMan.prototype.detect = function(){        
-    var tempEls;
-    /** 객체탐지 적용(담는 상자) **/
-    tempEls = document.querySelectorAll('[data-box]');
-    for (var j=0; j<tempEls.length; j++){
-        this.addBox(tempEls[j]);
-    }    
-    /** 객체탐지 적용(상자 끌기) **/
-    tempEls = document.querySelectorAll('[data-exbox]');
-    for (var j=0; j<tempEls.length; j++){
-        this.addExBox(tempEls[j]);
-    }
-    /** 객체탐지 적용(상자 끌기) **/
-    tempEls = document.querySelectorAll('[data-obj]');
-    for (var j=0; j<tempEls.length; j++){
-        this.addObj(tempEls[j]);
-    }
+
+BoxMan.prototype.detect = function(afterDectectFunc){
+    var that = this;
+    getEl().ready(function(){
+        var tempEls;
+        /** 객체탐지 적용(담는 상자) **/
+        tempEls = document.querySelectorAll('[data-box]');
+        for (var j=0; j<tempEls.length; j++){
+            that.addBox(tempEls[j]);
+        }
+        /** 객체탐지 적용(상자 끌기) **/
+        tempEls = document.querySelectorAll('[data-exbox]');
+        for (var j=0; j<tempEls.length; j++){
+            that.addExBox(tempEls[j]);
+        }
+        /** 객체탐지 적용(상자 끌기) **/
+        tempEls = document.querySelectorAll('[data-obj]');
+        for (var j=0; j<tempEls.length; j++){
+            that.addObj(tempEls[j]);
+        }
+        /** Run Function After Detect **/
+        afterDectectFunc(that);
+        var afterDetectFuncList = that.afterDetectFuncList;
+        for (var j=0; j<afterDetectFuncList.length; j++){
+            afterDetectFuncList[j]();
+        }
+    });
+    return this;
+};
+BoxMan.prototype.afterDetect = function(func){
+    var that = this;
+    that.afterDetectFuncList.push(func);
+    return this;
 };
 BoxMan.prototype.addEventListener = function(eventNm, func){
     if (!this.addedEventFuncs[eventNm]) this.addedEventFuncs[eventNm] = [];
@@ -119,12 +153,13 @@ BoxMan.prototype.execEvent = function(eventNm, event){
 BoxMan.prototype.addBox = function(el){
     if (el.getAttribute('data-box') == null && el.getAttribute('data-box') == undefined) el.setAttribute('data-box', '');
     var infoObj = {
-        id:el.getAttribute('data-box-id'),
         limit:el.getAttribute('data-limit'),
         acceptbox:getData(el.getAttribute('data-accept-box')).parse(),
         rejectbox:getData(el.getAttribute('data-reject-box')).parse(),
         acceptobj:getData(el.getAttribute('data-accept-obj')).parse(),
         rejectobj:getData(el.getAttribute('data-reject-obj')).parse(),
+        conditionbox:[],
+        conditionobj:[],
         beforeboxin:el.getAttribute('data-event-beforeboxin'),
         boxinout:el.getAttribute('data-event-boxinout'),
         start:el.getAttribute('data-event-start'),
@@ -135,11 +170,21 @@ BoxMan.prototype.addBox = function(el){
 };
 BoxMan.prototype.newBox = function(infoObj){
     var newEl = getNewEl('div', '', '', {'data-box':'true'}, '');
-    parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
+    var parentEl;
+    if (infoObj.parent){
+        if (typeof parent == 'string'){
+            parentEl = document.getElementById(infoObj.parent);
+        }else{
+            parentEl = infoObj.parent;
+        }
+    }else{
+        parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
+    }
     this.setBox(newEl, infoObj, parentEl);
     return newEl;    
 };
-BoxMan.prototype.setBox = function(el, infoObj, parentEl){    
+BoxMan.prototype.setBox = function(el, infoObj, parentEl){
+    el = getEl(el).obj;
     infoObj = (infoObj)? infoObj:{};
     if (el.isAdaptedBox){
         return false;
@@ -151,18 +196,21 @@ BoxMan.prototype.setBox = function(el, infoObj, parentEl){
     var that = this;
     var boxObjs = this.boxObjs;
     // ID 적용
-    var id = (infoObj.id)? infoObj.id : getEl(boxObjs).getNewSeqId('tmp');
-    el.boxid = id;
-    this.boxObjs[id] = infoObj;
-    this.boxObjs[id].el = el;
-    this.boxObjs[id].id = id;
+    var manid = (infoObj.manid)? infoObj.manid : getEl(boxObjs).getNewSeqId('tmpBox');
+    el.manid = manid;
+    this.boxObjs[manid] = infoObj;
+    this.boxObjs[manid].el = el;
+    this.boxObjs[manid].id = el.id;
+    this.boxObjs[manid].manid = manid;
+    this.boxObjs[manid].mode = new BoxManMode();
 
     // Element 설정
-    var g = this.globalBoxSetup;
+    var g = this.globalSetupForBox;
     var o = (infoObj)? infoObj:{};
     for (var gNm in g){
         if (!o[gNm]) o[gNm] = g[gNm];
     }
+    console.log(o);
     if (o){
         if (o.imgURL) el.style.background = 'url("'+ o.imgURL +'")';
         if (o.width && o.height) el.style.backgroundSize = o.width+' '+o.height;
@@ -171,7 +219,8 @@ BoxMan.prototype.setBox = function(el, infoObj, parentEl){
         if (o.content) el.innerHTML = o.content;
     } 
     // DOM에 추가   
-    if (parentEl) getEl(parentEl).add(el);    
+    if (parentEl)
+        getEl(parentEl).add(el);
     // Event 추가
     if (o.beforeboxin){
         el.executeEventBeforeboxin = new Function('box', 'obj', 'boxsize', eventFn);
@@ -189,27 +238,177 @@ BoxMan.prototype.setBox = function(el, infoObj, parentEl){
     if (o.boxout){
         el.executeEventBoxout = new Function('box','obj','boxSize', eventFn);
     }    
-    return id;
+    return manid;
 };
-BoxMan.prototype.getBox = function(param){    
-    if (typeof param == 'string'){        
+BoxMan.prototype.delBox = function(param){
+    var obj = this.getBox(param);
+    var el = obj.el;
+    var manid = el.manid;
+    delete this.boxObjs[manid];
+    el.parentNode.removeChild(el);
+    return this;
+};
+BoxMan.prototype.getBox = function(param){
+    if (typeof param == 'string'){
         return this.getBoxById(param);
-    }else{        
+    }else if (param instanceof Element){
         return this.getBoxByEl(param);
-    }    
+    }else{
+        var resultList = this.getBoxesByCondition(param);
+        if (resultList != null && resultList.length > 0)
+            return resultList[0];
+    }
+    return;
 };
-BoxMan.prototype.getBoxById = function(id){
-    return this.boxObjs[id];
-};
-BoxMan.prototype.getBoxByEl = function(el){
-    var boxObjs = this.boxObjs;    
-    if (el && el.boxid){
-        var boxid = el.boxid;        
-        var boxObj = boxObjs[boxid];
-        return boxObj;        
-    }    
+BoxMan.prototype.setBoxMode = function(targetBoxCondition, infoObj){
+    //Get Target
+    var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
+    //Set Condition Data
+    for (var i=0; i<targetBoxList.length; i++){
+        var targetBox = targetBoxList[i];
+        targetBox.mode.set(infoObj);
+    }
+    return this;
 };
 
+BoxMan.prototype.getBoxById = function(id){
+    var el = document.getElementById(id);
+    return this.boxObjs[el.manid];
+};
+BoxMan.prototype.getBoxByEl = function(el){
+    var boxObjs = this.boxObjs;
+    if (el && el.manid){
+        var manid = el.manid;
+        var boxObj = boxObjs[manid];
+        return boxObj;
+    }
+};
+BoxMan.prototype.getBoxByManId = function(manid){
+    return this.boxObjs[manid];
+};
+BoxMan.prototype.getBoxes = function(){
+    return this.boxObjs;
+};
+BoxMan.prototype.getBoxesByCondition = function(condition){
+    var resultList = [];
+    var boxObjs = this.boxObjs;
+    for (var boxName in boxObjs){
+        var boxObj = boxObjs[boxName];
+        var result = getEl(boxObj).find(condition);
+        if (result)
+            resultList.push(result);
+    }
+    return resultList;
+};
+BoxMan.prototype.getBoxesByDomAttributeCondition = function(condition){
+    var resultList = [];
+    var boxObjs = this.boxObjs;
+    for (var boxName in boxObjs){
+        var boxObj = boxObjs[boxName];
+        var el = boxObj.el;
+        var result = getEl(el).findDomAttribute(condition);
+        if (result)
+            resultList.push(result);
+    }
+    return resultList;
+};
+
+BoxMan.prototype.clearBox = function(param){
+    var el = getEl(param).obj;
+    el.innerHTML = "";
+    return this;
+};
+BoxMan.prototype.addAcceptBox = function(targetBoxCondition, condition){
+    var el = getEl(targetBoxCondition).obj;
+    var manid = el.manid;
+    var boxObj = this.boxObjs[manid];
+    if (boxObj.acceptbox instanceof Array){
+        if (condition instanceof Array)
+            boxObj.acceptbox.concat(condition);
+        else
+            boxObj.acceptbox.push(condition);
+    }else{
+        boxObj.acceptbox = [boxObj.acceptbox];
+    }
+    return this;
+};
+BoxMan.prototype.addRejectBox = function(targetBoxCondition, condition){
+    var el = getEl(targetBoxCondition).obj;
+    var manid = el.manid;
+    var boxObj = this.boxObjs[manid];
+    if (boxObj.rejectbox instanceof Array){
+        if (condition instanceof Array)
+            boxObj.rejectbox.concat(condition);
+        else
+            boxObj.rejectbox.push(condition);
+    }else{
+        boxObj.rejectbox = [boxObj.acceptbox];
+    }
+    return this;
+};
+BoxMan.prototype.addConditionWithBox = function(targetBoxCondition, condition, data){
+    //Get Target
+    var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
+    //Set Condition Data
+    for (var i=0; i<targetBoxList.length; i++){
+        var targetBox = targetBoxList[i];
+        targetBox.conditionbox.push({
+            condition:condition,
+            data:data
+        });
+    }
+    return this;
+};
+BoxMan.prototype.getConditionData = function(target, conditionDataList){
+    var result = {};
+    if (conditionDataList != null && conditionDataList.length > 0){
+        for (var i=0; i<conditionDataList.length; i++){
+            var conditionObj = conditionDataList[i];
+            var condition = conditionObj.condition;
+            var data = conditionObj.data;
+            if (getEl(target).isAccepted(condition)){
+                for (var filedName in data){
+                    result[filedName] = data[filedName];
+                }
+            }
+        }
+    }
+    return result;
+};
+
+
+BoxMan.prototype.addAcceptObj = function(targetBoxCondition, condition){
+    var el = getEl(targetBoxCondition).obj;
+    var manid = el.manid;
+    var boxObj = this.boxObjs[manid];
+    if (boxObj.acceptobj instanceof Array){
+        if (condition instanceof Array)
+            boxObj.acceptobj.concat(condition);
+        else
+            boxObj.acceptobj.push(condition);
+    }else{
+        boxObj.acceptobj = [boxObj.acceptobj];
+    }
+    return this;
+};
+BoxMan.prototype.addRejectObj = function(targetBoxCondition, condition){
+    var el = getEl(targetBoxCondition).obj;
+    var manid = el.manid;
+    var boxObj = this.boxObjs[manid];
+    if (boxObj.rejectobj instanceof Array){
+        if (condition instanceof Array)
+            boxObj.rejectobj.concat(condition);
+        else
+            boxObj.rejectobj.push(condition);
+    }else{
+        boxObj.rejectobj = [boxObj.rejectobj];
+    }
+    return this;
+};
+BoxMan.prototype.addConditionWithObj = function(targetBoxCondition, condition, data){
+    this.conditionobj;
+    return this;
+};
 
 
 
@@ -219,14 +418,23 @@ BoxMan.prototype.getBoxByEl = function(el){
 BoxMan.prototype.addExBox = function(el){
     if (el.getAttribute('data-exbox') == null && el.getAttribute('data-exbox') == undefined) el.setAttribute('data-exbox', '');
     var infoObj = {
-        id:el.getAttribute('data-exbox-id')       
-    };    
+        id:el.getAttribute('data-exbox-id')
+    };
     this.setExBox(el, infoObj);
 };
 BoxMan.prototype.newExBox = function(infoObj){
     var newEl = getNewEl('div', '', '', {'data-exbox':'true'}, '');
-    parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
-    this.setBox(newEl, infoObj, parentEl);
+    var parentEl;
+    if (infoObj.parent){
+        if (typeof parent == 'string'){
+            parentEl = document.getElementById(infoObj.parent);
+        }else{
+            parentEl = infoObj.parent;
+        }
+    }else{
+        parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
+    }
+    this.setExBox(newEl, infoObj, parentEl);
     return newEl;
 };
 BoxMan.prototype.setExBox = function(el, infoObj, parentEl){    
@@ -241,14 +449,15 @@ BoxMan.prototype.setExBox = function(el, infoObj, parentEl){
     var that = this;
     var exBoxObjs = this.exBoxObjs;
     // ID 적용
-    var id = (infoObj.id)? infoObj.id : getEl(exBoxObjs).getNewSeqId('tmp');
-    el.exboxid = id;
-    this.exBoxObjs[id] = infoObj;
-    this.exBoxObjs[id].el = el;
-    this.exBoxObjs[id].id = id;
+    var manid = (infoObj.manid)? infoObj.manid : getEl(exBoxObjs).getNewSeqId('tmpExBox');
+    el.manid = manid;
+    this.exBoxObjs[manid] = infoObj;
+    this.exBoxObjs[manid].el = el;
+    this.exBoxObjs[manid].id = el.id;
+    this.exBoxObjs[manid].manid = manid;
 
     // Element 설정
-    var g = this.globalExBoxSetup;
+    var g = this.globalSetupForExBox;
     var o = (infoObj)? infoObj:{};
     for (var gNm in g){
         if (!o[gNm]) o[gNm] = g[gNm];
@@ -272,7 +481,7 @@ BoxMan.prototype.setExBox = function(el, infoObj, parentEl){
     var eventFn = el.getAttribute('data-exbox');
     if (eventFn != null && eventFn != undefined) 
         that.addEventListener('drop', new Function('event', eventFn));
-    return id;
+    return manid;
 };
 BoxMan.prototype.getExBox = function(param){    
     if (typeof param == 'string'){        
@@ -281,17 +490,25 @@ BoxMan.prototype.getExBox = function(param){
         return this.getExBoxByEl(param);
     }    
 };
+BoxMan.prototype.getExBoxes = function(){
+    return this.exBoxObjs;
+};
 BoxMan.prototype.getExBoxById = function(id){
-    return this.exBoxObjs[id];
+    var el = document.getElementById(id);
+    return this.exBoxObjs[el.manid];
+};
+BoxMan.prototype.getExBoxByManId = function(manid){
+    return this.exBoxObjs[manid];
 };
 BoxMan.prototype.getExBoxByEl = function(el){
     var exBoxObjs = this.exBoxObjs;    
-    if (el && el.exboxid){
-        var exboxid = el.exboxid;        
-        var exBoxObjs = exBoxObjs[exboxid];
+    if (el && el.manid){
+        var manid = el.manid;
+        var exBoxObjs = exBoxObjs[manid];
         return exBoxObjs;        
     }    
 };
+
 
 
 
@@ -331,13 +548,22 @@ BoxMan.prototype.handleDrop = function(eb){
  *************************/
 BoxMan.prototype.addObj = function(el){
     var infoObj = {
-        objid:el.getAttribute('data-obj-id')
+        manid:el.getAttribute('data-obj-id')
     };    
     this.setObj(el, infoObj);
 };
 BoxMan.prototype.newObj = function(infoObj){    
-    var newEl = getNewEl('div', '', '', {'data-obj':'true'}, '');    
-    parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
+    var newEl = getNewEl('div', '', '', {'data-obj':'true'}, '');
+    var parentEl;
+    if (infoObj.parent){
+        if (typeof parent == 'string'){
+            parentEl = document.getElementById(infoObj.parent);
+        }else{
+            parentEl = infoObj.parent;
+        }
+    }else{
+        parentEl = (infoObj.parentEl) ? infoObj.parentEl : document.body;
+    }
     this.setObj(newEl, infoObj, parentEl);
     return newEl;
 };
@@ -353,14 +579,16 @@ BoxMan.prototype.setObj = function(el, infoObj, parentEl){
     var that = this;
     var objs = this.objs;    
     // ID 적용
-    var id = (infoObj.id)? infoObj.id : getEl(objs).getNewSeqId('tmp');
-    el.objid = id;
-    this.objs[id] = infoObj;
-    this.objs[id].el = el;
-    this.objs[id].id = id;
+//    var manid = (infoObj.manid)? infoObj.manid : getEl(objs).getNewSeqId('tmpObj');
+    var manid = getEl(objs).getNewSeqId('tmpObj');
+    el.manid = manid;
+    this.objs[manid] = infoObj;
+    this.objs[manid].el = el;
+    this.objs[manid].id = el.id;
+    this.objs[manid].manid = manid;
         
     // Element 설정
-    var g = this.globalObjSetup;    
+    var g = this.globalSetupForObj;
     var o = (infoObj)? infoObj:{};
     for (var gNm in g){
         if (!o[gNm]) o[gNm] = g[gNm];
@@ -383,27 +611,106 @@ BoxMan.prototype.setObj = function(el, infoObj, parentEl){
         getEl(el).addEventListener('mousedown', function(event){ that.objStartMove(event, el); });
     }
     getEl(el).addEventListener('click', function(){});
-    return id;
+    return manid;
+};
+BoxMan.prototype.delObj = function(param){
+    var obj = this.getObj(param);
+    var el = obj.el;
+    var manid = el.manid;
+    delete this.objs[manid];
+    el.parentNode.removeChild(el);
+    return this;
 };
 BoxMan.prototype.getObj = function(param){
     if (typeof param == 'string'){        
         return this.getObjById(param);
-    }else{        
+    }else if (param instanceof Element){
         return this.getObjByEl(param);
-    }    
-    return this.objs[id];
+    }else{
+        var resultList = this.getObjsByCondition(param);
+        if (resultList != null && resultList.length > 0)
+            return resultList[0];
+    }
+    return;
+};
+BoxMan.prototype.getObjs = function(){
+    return this.objs;
+};
+BoxMan.prototype.getObjsByCondition = function(condition){
+    var resultList = [];
+    var objs = this.objs;
+    for (var boxName in objs){
+        var obj = objs[boxName];
+        var result = getEl(obj).find(condition);
+        if (result)
+            resultList.push(result);
+    }
+    return resultList;
 };
 BoxMan.prototype.getObjById = function(id){
-    return this.objs[id];
+    var el = document.getElementById(id);
+    return this.objs[el.manid];
+};
+BoxMan.prototype.getObjByManId = function(manid){
+    return this.objs[manid];
 };
 BoxMan.prototype.getObjByEl = function(el){
     var objs = this.objs;    
-    if (el && el.objid){
-        var objid = el.objid;
-        var obj = objs[objid];
+    if (el && el.manid){
+        var manid = el.manid;
+        var obj = objs[manid];
         return obj;
     }    
 };
+BoxMan.prototype.getObjsByBox = function(box){
+    var resultObj = {};
+    var boxObj = this.getBox(box);
+    var boxEl = boxObj.el;
+    for (var i=0; i<boxEl.children.length; i++){
+        var child = boxEl.children[i];
+        if (child.getAttribute('data-obj') != null){
+            var manid = child.manid;
+            var objObj = this.objs[manid];
+            resultObj[manid] = objObj;
+        }
+    }
+    return resultObj;
+};
+BoxMan.prototype.getObjListByBox = function(box){
+    var resultList = [];
+    var boxObj = this.getBox(box);
+    var boxEl = boxObj.el;
+    for (var i=0; i<boxEl.children.length; i++){
+        var child = boxEl.children[i];
+        if (child.getAttribute('data-obj') != null){
+            var manid = child.manid;
+            var objObj = this.objs[manid];
+            resultList.push(objObj);
+        }
+    }
+    return resultList;
+};
+
+
+
+BoxMan.prototype.moveAllToOtherBox = function(fromBox, toBox){
+    var elementFromBox = getEl(fromBox).obj;
+    var elementToBox = getEl(toBox).obj;
+    var objs = this.getObjsByBox(elementFromBox);
+    for (var objName in objs){
+        var elementObj = objs[objName].el;
+        elementToBox.appendChild(elementObj);
+    }
+}
+BoxMan.prototype.shellterToBox = function(toBox){
+    var mvObjOriginalShelterList = this.metaObj.mvObjOriginalShelterList;
+    var elementToBox = getEl(toBox).obj;
+    for (var i=0; i<mvObjOriginalShelterList.length; i++){
+        var el = mvObjOriginalShelterList[i];
+        elementToBox.appendChild(el);
+    }
+}
+
 // ObjMan.prototype.addEventListener = function(eventNm, func){
 //     if (!this.addedEventFuncs[eventNm]) this.addedEventFuncs[eventNm] = [];
 //     var newFunc;
@@ -479,7 +786,15 @@ BoxMan.prototype.objStartMove = function(event, selectedObj){
     }
     meta.mvObj = mvObj;    
     /*** 갈 곳 미리보기 클론 ***/
-    this.createPreviewer(mvObj);
+    var previewClone = this.createPreviewer(mvObj);
+    meta.mvObjPreviewClone = previewClone;
+    meta.mvObjCloneList.push(previewClone);/* ie브라우저를 벗어나서 mouseup이벤트가 발생하지 않는 것 때문에 클론이 지워지지 않는 것 방지 */
+    /*** 카피시 원본 위치도 계속 표시하기 위한 클론 ***/
+    var previewOriginalClone = this.createPreviewer(mvObj);
+    meta.mvObjPreviewOriginalClone = previewOriginalClone;
+//    meta.mvObjCloneList.push(previewOriginalClone);
+    /*** Swap, Overwrite 용 정리 ***/
+    meta.mvObjOriginalShelterList = [];
     /*** 이동 전 정보 저장 ***/
     this.saveInfoBeforeMove(mvObj, event);    
 };
@@ -519,6 +834,7 @@ BoxMan.prototype.whenMouseUp = function (event){
         decidedBox = (decidedBox) ? decidedBox : meta.layerOnMove;
         /*** 객체 갈 곳 미리보기 지우기 ***/
         this.deletePreviewer();
+        this.deleteOriginalClonePreviewer();
         // 결정된 박스에 mvObj넣기
         // if (decidedBox != undefined){
         this.moveObjTo(mvObj, decidedBox);        
@@ -553,7 +869,7 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
         if(this.isInBox(el, lastPosX, lastPosY) && mvObj != el){
             mvObjOnThisBoxObjs.push(el);            
         }
-    }    
+    }
     /** 들어갈 박스 선정 **/
     for (var i=0; i<mvObjOnThisBoxObjs.length; i++){
         var parentObj = mvObjOnThisBoxObjs[i].parentNode;
@@ -562,6 +878,7 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
         var flagIsFixed = false;
         /* 자신이  fixed이면 flagIsFixed=true */
         if (mvObjOnThisBoxObjs[i].style.position=='fixed') flagIsFixed = true;
+
         /* 상자의 domtree단계?? 파악하기 */
         while (parentObj){
             // 박스가 mvObj의 자식이면 건너뛰기
@@ -571,9 +888,9 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
             }
             // 부모의 영역에 가려진 부분이면 건너뛰기
             if (!this.isInBox(parentObj, lastPosX, lastPosY)
-                && parentObj != document.body
-                && parentObj != document.body.parentNode
-                && parentObj != document.body.parentNode.parentNode){
+            && parentObj != document.body
+            && parentObj != document.body.parentNode
+            && parentObj != document.body.parentNode.parentNode){
                 stopFlag=true;
                 break;
             }
@@ -644,6 +961,11 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
     meta.mvObjBeforeNextSibling = mvObj.nextSibling;
     meta.mvObjStartBodyOffset = getEl(mvObj).getBoundingClientRect(); // body관점에서 대상객체의 offset    
     mvObj.style.zIndex = getData().findHighestZIndex(['div']) + 1; // 이동객체에 가장 높은 zIndex 설정
+    meta.lastGoingToBeInThisBox = meta.mvObjBeforeBox;
+
+    meta.mode.clear()
+             .merge(this.globalSetup)
+             .merge(this.getBox(meta.mvObjBeforeBox).mode);
 
     if (mvObj.parentNode != document.body){                
         var o = this.findAbsoluteParentEl(mvObj);
@@ -724,110 +1046,94 @@ BoxMan.prototype.setMovingState = function(mvObj){
     meta.isOnMoving = true;
 };
 BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
-    var meta = this.metaObj;    
+    var meta = this.metaObj;
+    var mode = meta.mode;
     var mvObjBeforeBox = meta.mvObjBeforeBox;
-    var mvObjBeforeNextSibling = meta.mvObjBeforeNextSibling;
-    var mvObjBeforePosition = meta.mvObjBeforePosition;
-    var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;
+//    var mvObjBeforeNextSibling = meta.mvObjBeforeNextSibling;
+//    var mvObjBeforePosition = meta.mvObjBeforePosition;
+//    var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;
     var mvObjPreviewClone = meta.mvObjPreviewClone;
+    var previewOriginalClone = meta.mvObjPreviewOriginalClone;
     var bfBoxInfo = this.getBox(mvObjBeforeBox);
     var afBoxInfo = this.getBox(boxEl);
     var objInfo = this.getObj(mvObj);
-    
+
     var isFromBox = (bfBoxInfo != undefined);
     var isToBox = (afBoxInfo != undefined);
-    var isToTree = ( isToBox 
-                  && boxEl.getAttribute("data-tree-type") != undefined );
-    var canEnter = ( isToBox 
-                  && ( afBoxInfo.limit > this.getMovableObjCount(boxEl) || afBoxInfo.limit == undefined) );
     var isSameBox = ( bfBoxInfo == afBoxInfo );
-    var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
-    var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
-    var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
-    var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
-    var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
+    var canEnter = false;
+    // Set Mode (Global Set < BeforeBox Set < AfterBoxCondition Set < AfterObjCondition Set)
+    if (isToBox){
+        var boxConditionData = this.getConditionData(bfBoxInfo, afBoxInfo.conditionbox);
+        var objConditionData = this.getConditionData(objInfo, afBoxInfo.conditionobj);
+        mode.merge(boxConditionData);
+        mode.merge(objConditionData);
+        canEnter = ( afBoxInfo.limit > this.getMovableObjCount(boxEl) || afBoxInfo.limit == undefined );
+    }
+    var appendType = mode.get('appendType');
+    var modeRemoveOutOfBox = mode.get('modeRemoveOutOfBox');
+    var modeOnlyBoxToBox = mode.get('modeOnlyBoxToBox');
+    var modeCopy = mode.get('modeCopy');
+
+    var isTypeBetween = ( appendType == BoxMan.APPEND_TYPE_BETWEEN );
+    var isRollback = ( !isTypeBetween && (isSameBox || !canEnter) );
+    var isRollback2 = ( isTypeBetween && !canEnter && !isSameBox );
+    var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));
+    var isRemoveOutOfBox = ( modeRemoveOutOfBox && !isToBox && !isSameBox);
+    var isNotOnlyToBox = ( modeOnlyBoxToBox && !isToBox && isFromBox);
     var isAcceptedBox = ( !isToBox || getEl(bfBoxInfo).isAccepted(afBoxInfo.acceptbox, afBoxInfo.rejectbox) );
     var isAcceptedObj = ( !isToBox || getEl(objInfo).isAccepted(afBoxInfo.acceptobj, afBoxInfo.rejectobj) );
 
-    // var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
-    // var isToBox = (boxEl != undefined);
-    // var isToTree = ( isToBox 
-    //               && boxEl.getAttribute("data-tree-type") != undefined );
-    // var canEnter = ( isToBox 
-    //               && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '') );
-    // var isSameBox = ( boxEl == mvObjBeforeBox );
-    // var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
-    // var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
-    // var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
-    // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
-    // var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
-    
     var flagBeforeBoxEvent = false;
     var flagAfterBoxEvent = false;
     var isMoved = false;
 
     // 다시 같은 상자면 원위치, 이동을 허가하지 않은 상자면 원위치
     if ( isRollback || isRollbackWithEvent || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
-        this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);        
-
-    // Tree의 data-box기능이면
-    }else if (isToTree){
-        getEl(boxEl).clas.remove('sj-tree-box-to-go');
-        if (boxEl.executeEventDrop){
-            // 해당 tree에 정보 저장
-            targetTree = sj.treeMan.get(boxEl.sjid);
-            targetTree.repository[mvObj.sjid] = sj.objMan.get(mvObj.sjid);
-            // 이동의 경우
-            mvObj.parentNode.removeChild(mvObj);
-            // 복사의 경우
-            // 제공할 데이터
-            var data = {
-                mvObj:mvObj,
-                obj:sj.objMan.get(mvObj.sjid),
-                decidedBox:boxEl,
-                treeObj:targetTree,
-                mvObjBeforeBox:mvObjBeforeBox,
-                path:sj.treeMan.getPath(boxEl.sjid)
-            };
-            // 이벤트 실행
-            boxEl.executeEventDrop(event, data);
+        if (isRemoveOutOfBox && !isToBox){
+            this.delObj(mvObj);
+            return;
         }
+        this.backToBefore(mvObj, mvObjBeforeBox, appendType);
 
     // 이동전 수행 펑션 true면 통과
     }else{ 
-        // 다른 박스로 이동 
+        // 다른 박스로 이동
         if (boxEl){
+            //Back Up Moment
             if (isRollback2){
-                this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
+                this.backToBefore(mvObj, mvObjBeforeBox, appendType);
                 return;
             }
+            //Copy Moment
             var mvTarget;
-            if (meta.isOverwrite && !isSameBox){
-                boxEl.innerHTML = '';
-            }        
-            if (meta.isCopy && !isSameBox){
-                // 카피
-                var copyObj = mvObj.cloneNode(true);                                                        
-                this.setObj('', copyObj);
-                mvTarget = copyObj;
-                // 원위치
-                this.backToBefore(mvObj, mvObjBeforeBox, meta.appendType);
+            if (modeCopy && appendType != BoxMan.APPEND_TYPE_SWAP && !isSameBox){
+                var copyEl = this.clone(mvObj);
+                mvTarget = copyEl;
+                this.backToBefore(mvObj, mvObjBeforeBox, appendType);
             }else{
                 mvTarget = mvObj;
             }
-
-            this.goTo(mvTarget, boxEl, meta.appendType, mvObjPreviewClone);
+            //Before Move Moment
+            if (appendType == BoxMan.APPEND_TYPE_OVERWRITE && !isSameBox){
+                this.clearBox(boxEl);
+            }else if (appendType == BoxMan.APPEND_TYPE_SWAP && !isSameBox && canEnter){
+//                this.moveAllToOtherBox(boxEl, mvObjBeforeBox);
+                this.shellterToBox(mvObjBeforeBox);
+            }else{
+            }
+            //Move Moment
+            this.goTo(mvTarget, boxEl, appendType, mvObjPreviewClone);
             flagBeforeBoxEvent = true;
             flagAfterBoxEvent = true;
             isMoved = true;
         // 허공에서 허공으로 이동
         }else{
-            console.log(11111);
             meta.mvObjBeforeBox.appendChild(mvObj);
             
         }
-        
     }
+
     // 결정된 박스에 mvObj넣기 (밖 허가 안되면 위치 원상 복구, 허가면 이전 박스의 박스아웃 이벤트 발생)
     // 이벤트 실행(박스객체, 이동객체, 박스안 이동객체 수)
     if ( flagBeforeBoxEvent || (!isNotOnlyToBox && isToBox) ){        
@@ -846,15 +1152,15 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
     mvObj = null;
     return isMoved;
 };
-BoxMan.prototype.goTo = function(mvObj, boxEl, type, mvObjPreviewClone){
-    // APPEND_TYPE_LAST
-    if (type == this.APPEND_TYPE_LAST){
+BoxMan.prototype.goTo = function(mvObj, boxEl, appendType, mvObjPreviewClone){
+    //APPEND_TYPE_LAST
+    if (appendType == BoxMan.APPEND_TYPE_LAST){
         boxEl.appendChild(mvObj);
-    // APPEND_TYPE_FIRST
-    }else if (type == this.APPEND_TYPE_FIRST){
+    //APPEND_TYPE_FIRST
+    }else if (appendType == BoxMan.APPEND_TYPE_FIRST){
         boxEl.insertBefore(mvObj, boxEl.firstChild);
-    //APPEND_TYPE_PUSH
-    }else if (type == this.APPEND_TYPE_PUSH){                    
+    //APPEND_TYPE_BETWEEN
+    }else if (appendType == BoxMan.APPEND_TYPE_BETWEEN){
         var mousePosObj = this.getMovableObj(boxEl, event);                    
         if (mousePosObj){                        
             if (mousePosObj == mvObjPreviewClone.nextSibling){
@@ -865,11 +1171,21 @@ BoxMan.prototype.goTo = function(mvObj, boxEl, type, mvObjPreviewClone){
         }else{
             boxEl.appendChild(mvObj);
         }
-    }    
+    //APPEND_TYPE_OVERWRITE
+    }else if (appendType == BoxMan.APPEND_TYPE_OVERWRITE){
+        boxEl.appendChild(mvObj);
+    //APPEND_TYPE_SWAP
+    }else if (appendType == BoxMan.APPEND_TYPE_SWAP){
+        boxEl.appendChild(mvObj);
+    //APPEND_TYPE_INVISIBLE
+    }else if (appendType == BoxMan.APPEND_TYPE_INVISIBLE){
+    }
     mvObj.style.position = '';
 };
-BoxMan.prototype.backToBefore = function(mvObj, boxEl, type){
-    var meta = this.metaObj;        
+BoxMan.prototype.backToBefore = function(mvObj, boxEl, appendType, modeCopy){
+    if (modeCopy && appendType != BoxMan.APPEND_TYPE_SWAP)
+        return;
+    var meta = this.metaObj;
     var mvObjBeforeNextSibling = meta.mvObjBeforeNextSibling;    
     var mvObjBeforePosition = meta.mvObjBeforePosition;
     var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;    
@@ -880,6 +1196,28 @@ BoxMan.prototype.backToBefore = function(mvObj, boxEl, type){
         mvObj.style.top = mvObjStartBodyOffset.y +'px';
         mvObj.style.float = ''; //??왜 플롯을??
     }      
+};
+BoxMan.prototype.originalCopyBackToBefore = function(mvObj, boxEl, appendType, modeCopy){
+    if (modeCopy && appendType != BoxMan.APPEND_TYPE_SWAP){
+        if (mvObj.parentNode != boxEl){
+            if (!modeCopy || appendType == BoxMan.APPEND_TYPE_SWAP)
+                return;
+            var meta = this.metaObj;
+            var mvObjBeforeNextSibling = meta.mvObjBeforeNextSibling;
+            var mvObjBeforePosition = meta.mvObjBeforePosition;
+            var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;
+            boxEl.insertBefore(mvObj, mvObjBeforeNextSibling);
+            mvObj.style.position = (mvObjBeforePosition=='absolute') ? 'absolute':'';
+            if (mvObjBeforePosition == 'absolute'){
+                mvObj.style.left = mvObjStartBodyOffset.x +'px';
+                mvObj.style.top = mvObjStartBodyOffset.y +'px';
+                mvObj.style.float = ''; //??왜 플롯을??
+            }
+        }
+    }else{
+        if (mvObj.parentNode)
+            mvObj.parentNode.removeChild(mvObj);
+    }
 };
 
 
@@ -893,14 +1231,14 @@ BoxMan.prototype.createPreviewer = function(mvObj){
     mvObjPreviewClone.setAttribute('data-obj-previewer', 'true'); 
     getEl(mvObjPreviewClone).clas.add('sj-preview-going-to-be-in-box');
     mvObjPreviewClone.style.position = "";
-    /* ie브라우저를 벗어나서 mouseup이벤트가 발생하지 않는 것 때문에 클론이 지워지지 않는 것 방지 */
-    meta.mvObjPreviewClone = mvObjPreviewClone;
-    meta.mvObjCloneList.push(mvObjPreviewClone);
+    return mvObjPreviewClone;
 };
 BoxMan.prototype.setPreviewer = function(mvObj, event){    
     var meta = this.metaObj;
+    var mode = meta.mode.clone();
     var lastGoingToBeInThisBox = meta.lastGoingToBeInThisBox;
     var mvObjPreviewClone = meta.mvObjPreviewClone;
+    var previewOriginalClone = meta.mvObjPreviewOriginalClone;
     var mvObjBeforeBox = meta.mvObjBeforeBox;    
     /** 가는 위치 미리 보여주기 **/
     var goingToBeInThisBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);    
@@ -911,61 +1249,83 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
 
     var isFromBox = (bfBoxInfo != undefined);
     var isToBox = (afBoxInfo != undefined);
-    var isToTree = ( isToBox 
-                  && boxEl.getAttribute("data-tree-type") != undefined );
-    var canEnter = ( isToBox 
-                  && ( afBoxInfo.limit > this.getMovableObjCount(boxEl) || afBoxInfo.limit == undefined) );
     var isSameBox = ( bfBoxInfo == afBoxInfo );
-    var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
-    var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
-    var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
-    var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
-    var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
+    var canEnter = false;
+    // Set Mode (Global Set < BeforeBox Set < AfterBoxCondition Set < AfterObjCondition Set)
+    if (isToBox){
+        var boxConditionData = this.getConditionData(bfBoxInfo, afBoxInfo.conditionbox);
+        var objConditionData = this.getConditionData(objInfo, afBoxInfo.conditionobj);
+        mode.merge(boxConditionData);
+        mode.merge(objConditionData);
+        canEnter = ( afBoxInfo.limit > this.getMovableObjCount(boxEl) || afBoxInfo.limit == undefined );
+    }
+    var appendType = mode.get('appendType');
+    var modeRemoveOutOfBox = mode.get('modeRemoveOutOfBox');
+    var modeOnlyBoxToBox = mode.get('modeOnlyBoxToBox');
+    var modeCopy = mode.get('modeCopy');
+
+    var isTypeBetween = ( appendType == BoxMan.APPEND_TYPE_BETWEEN );
+    var isRollback = ( !isTypeBetween && (isSameBox || !canEnter) );
+    var isRollback2 = ( isTypeBetween && !canEnter && !isSameBox );
+    var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));
+    var isRemoveOutOfBox = ( modeRemoveOutOfBox && !isToBox && !isSameBox);
+    var isNotOnlyToBox = ( modeOnlyBoxToBox && !isToBox && isFromBox);
     var isAcceptedBox = ( !isToBox || getEl(bfBoxInfo).isAccepted(afBoxInfo.acceptbox, afBoxInfo.rejectbox) );
     var isAcceptedObj = ( !isToBox || getEl(objInfo).isAccepted(afBoxInfo.acceptobj, afBoxInfo.rejectobj) );
 
-    // var isFromBox = (mvObjBeforeBox.getAttribute("data-box") != null && mvObjBeforeBox.getAttribute("data-box") != undefined);
-    // var isToBox = (boxEl != undefined);
-    // var isToTree = ( isToBox 
-    //               && boxEl.getAttribute("data-tree-type") != undefined );
-    // var canEnter = ( isToBox 
-    //               && (boxEl.getAttribute("data-box") > this.getMovableObjCount(boxEl) || boxEl.getAttribute("data-box") == '') );
-    // var isSameBox = ( boxEl == mvObjBeforeBox );
-    // var isTypePush = ( meta.appendType == this.APPEND_TYPE_PUSH );
-    // var isRollback = ( !isTypePush && (isSameBox || !canEnter) );
-    // var isRollback2 = ( isTypePush && !canEnter && !isSameBox );
-    // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));    
-    // var isNotOnlyToBox = ( meta.isBoxToBox && !isToBox && isFromBox);
-
-    // 갈 곳 미리보기 효과 (클론 효과)    
-    // Tree의 data-box기능이면 CSS효과만
-    if (isToTree){
-        if (lastGoingToBeInThisBox) getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
-        getEl(goingToBeInThisBox).clas.add('sj-tree-box-to-go');
-        meta.lastGoingToBeInThisBox = goingToBeInThisBox;       
-    
-    }else{        
-        // 원위치로 지정    
-        if (isRollback || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
-            this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, meta.appendType);
+    // 갈 곳 미리보기 효과 (클론 효과)
+    // 원위치로 지정
+    if (isRollback || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
+        this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
+        if (modeRemoveOutOfBox && !isSameBox && !isToBox){
+            if (mvObjPreviewClone.parentNode)
+                mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+            this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
             meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+            return;
+        }
+        if (!isAcceptedBox || !isAcceptedObj){
+            meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+            this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
+            return;
+        }
+        this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
+        meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+        this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
 
-        // 갈 예정인 박스안 지정
-        }else{
-            if (boxEl){        
-                if (isRollback2){
-                    this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, meta.appendType);
-                    return;
-                }
-                this.goTo(mvObjPreviewClone, goingToBeInThisBox, meta.appendType, mvObjPreviewClone);
+    // 갈 예정인 박스안 지정
+    }else{
+        if (boxEl){
+            //Back Up Moment
+            if (isRollback2){
+                this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
                 meta.lastGoingToBeInThisBox = goingToBeInThisBox;
-            }else{
-                // 박스 밖으로 갈 예정
-                if (lastGoingToBeInThisBox) getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
-                if (mvObjPreviewClone.parentNode) mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+                return;
             }
-        }        
+            var mvTarget;
+            //Copy Moment
+            this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
+            //Before Move Moment
+            if (appendType == BoxMan.APPEND_TYPE_OVERWRITE && !isSameBox){
+                if (modeCopy && mvObjPreviewClone.parentNode)
+                    mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+                this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
+            }else if (appendType == BoxMan.APPEND_TYPE_SWAP && !isSameBox && canEnter){
+                this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
+            }else{
+            }
+            //Move Moment
+            this.goTo(mvObjPreviewClone, goingToBeInThisBox, appendType, mvObjPreviewClone);
+        }else{
+            // 박스 밖으로 갈 예정
+            if (lastGoingToBeInThisBox)
+                getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
+            if (mvObjPreviewClone.parentNode)
+                mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+            this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
+        }
     }
+    meta.lastGoingToBeInThisBox = goingToBeInThisBox;
     
 };
 BoxMan.prototype.deletePreviewer = function(){
@@ -985,13 +1345,57 @@ BoxMan.prototype.deletePreviewer = function(){
         }
     }
     /** 다시 정의하면 기존 메모리에 할당된건 지워주게지? **/
-    if (mvObjCloneList.length > 3){
-        mvObjCloneList = [];
-    }    
-}
+    if (mvObjCloneList.length > 10)
+        meta.mvObjCloneList = [];
+};
+BoxMan.prototype.deleteOriginalClonePreviewer = function(){
+    var meta = this.metaObj;
+    var mvObjPreviewOriginalClone = meta.mvObjPreviewOriginalClone;
+    if (mvObjPreviewOriginalClone.parentNode)
+        mvObjPreviewOriginalClone.parentNode.removeChild(mvObjPreviewOriginalClone);
+};
 
 
 
+BoxMan.prototype.overWriteAndSwapPreview = function(goingToBeInThisBox, appendType){
+    var meta = this.metaObj;
+    if (meta.lastGoingToBeInThisBox != goingToBeInThisBox){
+        //백업되었던 것 원위치
+        for (var i=0; i<meta.mvObjOriginalShelterList.length; i++){
+            var el1 = meta.mvObjOriginalShelterList[i];
+            meta.mvObjOriginalBox.appendChild(el1);
+        }
+        //미리보기 지우기
+        this.deletePreviewer();
+        //상자이면
+        if (goingToBeInThisBox){
+            meta.mvObjOriginalBox = goingToBeInThisBox;
+            meta.mvObjOriginalShelterList = [];
+            var objs = this.getObjsByBox(goingToBeInThisBox);
+            if (objs){
+                //원본 백업
+                for (var objName in objs){
+                    var obj = objs[objName];
+                    if (obj){
+                        var el = obj.el;
+                        meta.mvObjOriginalShelterList.push(el);
+                    }
+                }
+                //원본 지우기
+                this.clearBox(goingToBeInThisBox);
+                //백업본 미리보기
+                if (appendType == BoxMan.APPEND_TYPE_SWAP){
+                    for (var i=0; i<meta.mvObjOriginalShelterList.length; i++){
+                        var el1 = meta.mvObjOriginalShelterList[i];
+                        var previewOriginalClone = this.createPreviewer(el1);
+                        meta.mvObjCloneList.push(previewOriginalClone);
+                        meta.mvObjBeforeBox.appendChild(previewOriginalClone);
+                    }
+                }
+            }
+        }
+    }
+};
 
 
 
@@ -1022,7 +1426,7 @@ BoxMan.prototype.setMaxSize = function(event){
     var w = testDiv.offsetWidth;
     var h = testDiv.offsetHeight;
     console.debug('MAX:'+ meta.cam.w +'/'+ meta.cam.h);
-    console.debug('-> MAX:'+ w +'/'+ h);
+    console.debug('=> '+ w +'/'+ h);
     // if (!meta.cam.w){
         meta.cam.w = w;
         meta.cam.h = h;
@@ -1101,5 +1505,85 @@ BoxMan.prototype.findAbsoluteParentEl = function(el){
 
 
 
+/**
+ * 테스트중
+ * @param setupObj
+ * @constructor
+ */
+function BoxManBox(setupObj){
+    this.limit;
+    this.acceptbox = [];
+    this.rejectbox = [];
+    this.acceptobj = [];
+    this.rejectobj = [];
+    this.conditionbox = [];
+    this.conditionobj = [];
+    this.beforeboxin;
+    this.boxinout;
+    this.start;
+    this.boxin;
+    this.boxout;
+    this.mode = new BoxManMode();
+}
+
+function BoxManObj(setupObj){
+}
+function BoxManExBox(setupObj){
+}
 
 
+/**
+* BoxManMode
+* @param setupObj
+* @constructor
+*/
+function BoxManMode(modes){
+    this.modes = {};
+    this.set(modes);
+}
+
+BoxManMode.prototype = {
+    set: function(param){
+        if (param instanceof Object){
+            for (var modeName in param){
+                this.modes[modeName] = param[modeName];
+            }
+        }else if (typeof param == 'string'){
+            this.modes[param] = true;
+        }
+        return this;
+    },
+    get: function(modeName){
+        return this.modes[modeName];
+    },
+    del: function(modeName){
+        delete this.modes[modeName];
+        return this;
+    },
+    toggle: function(modeName){
+        var mode = this.modes[modeName];
+        if (this.modes[modeName] != undefined && this.modes[modeName] != null){
+            if (typeof mode == 'boolean')
+                this.modes[modeName] = !mode;
+        }
+        return this;
+    },
+    clear:function(){
+        this.modes = {};
+        return this;
+    },
+    clone: function(){
+        return new BoxManMode(this.modes);
+    },
+    merge: function(mode){
+        if (mode instanceof BoxManMode){
+            var targetModes = mode.modes;
+            for (var modeName in targetModes){
+                this.modes[modeName] = targetModes[modeName];
+            }
+        }else{
+            this.set(mode);
+        }
+        return this;
+    }
+};
