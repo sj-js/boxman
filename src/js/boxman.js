@@ -1,22 +1,23 @@
 function BoxMan(setupObj){
     var that = this;
 
+    this.objs = {};
+    this.boxObjs = {};
+    this.exBoxObjs = {};
+    this.keyboarder = new BoxManKeyboarder(this);
+
+    this.afterDetectFuncList = [];
+    this.addedEventFuncs = {};
+
     this.globalSetup = {
         modeCopy:false,
         modeOnlyBoxToBox:true,
         modeRemoveOutOfBox:false,
-        appendType:BoxMan.APPEND_TYPE_SWAP
+        appendType:BoxMan.APPEND_TYPE_LAST
     }
     this.globalSetupForBox = {};
     this.globalSetupForObj = {};
     this.globalSetupForExBox = {};
-
-    this.objs = {};
-    this.boxObjs = {};
-    this.exBoxObjs = {};
-
-    this.afterDetectFuncList = [];
-    this.addedEventFuncs = {};
     this.metaObj = {
         mvObj:undefined,
         isOnDown:false,
@@ -118,7 +119,8 @@ BoxMan.prototype.detect = function(afterDectectFunc){
             that.addObj(tempEls[j]);
         }
         /** Run Function After Detect **/
-        afterDectectFunc(that);
+        if (afterDectectFunc)
+            afterDectectFunc(that);
         var afterDetectFuncList = that.afterDetectFuncList;
         for (var j=0; j<afterDetectFuncList.length; j++){
             afterDetectFuncList[j]();
@@ -151,7 +153,9 @@ BoxMan.prototype.execEvent = function(eventNm, event){
  * Box
  *************************/
 BoxMan.prototype.addBox = function(el){
-    if (el.getAttribute('data-box') == null && el.getAttribute('data-box') == undefined) el.setAttribute('data-box', '');
+    if (el.getAttribute('data-box') == null && el.getAttribute('data-box') == undefined)
+        el.setAttribute('data-box', '');
+
     var infoObj = {
         limit:el.getAttribute('data-limit'),
         acceptbox:getData(el.getAttribute('data-accept-box')).parse(),
@@ -260,6 +264,10 @@ BoxMan.prototype.getBox = function(param){
     }
     return;
 };
+BoxMan.prototype.getElementByBox = function(param){
+    var boxObj = this.getBox(param);
+    return boxObj.el;
+};
 BoxMan.prototype.setBoxMode = function(targetBoxCondition, infoObj){
     //Get Target
     var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
@@ -319,41 +327,53 @@ BoxMan.prototype.clearBox = function(param){
     return this;
 };
 BoxMan.prototype.addAcceptBox = function(targetBoxCondition, condition){
-    var el = getEl(targetBoxCondition).obj;
-    var manid = el.manid;
-    var boxObj = this.boxObjs[manid];
-    if (boxObj.acceptbox instanceof Array){
-        if (condition instanceof Array)
-            boxObj.acceptbox.concat(condition);
-        else
-            boxObj.acceptbox.push(condition);
-    }else{
-        boxObj.acceptbox = [boxObj.acceptbox];
+    //Get Target
+    var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
+    //Set Condition Data
+    for (var i=0; i<targetBoxList.length; i++) {
+        var targetBox = targetBoxList[i];
+        if (targetBox.acceptbox == undefined || targetBox.acceptbox == null){
+            targetBox.acceptbox = [];
+        }
+        if (targetBox.acceptbox instanceof Array) {
+            if (condition instanceof Array)
+                targetBox.acceptbox.concat(condition);
+            else
+                targetBox.acceptbox.push(condition);
+        } else {
+            targetBox.acceptbox = [targetBox.acceptbox];
+        }
     }
     return this;
 };
 BoxMan.prototype.addRejectBox = function(targetBoxCondition, condition){
-    var el = getEl(targetBoxCondition).obj;
-    var manid = el.manid;
-    var boxObj = this.boxObjs[manid];
-    if (boxObj.rejectbox instanceof Array){
-        if (condition instanceof Array)
-            boxObj.rejectbox.concat(condition);
-        else
-            boxObj.rejectbox.push(condition);
-    }else{
-        boxObj.rejectbox = [boxObj.acceptbox];
+    //Get Target
+    var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
+    //Set Condition Data
+    for (var i=0; i<targetBoxList.length; i++) {
+        var targetBox = targetBoxList[i];
+        if (targetBox.rejectbox == undefined || targetBox.rejectbox == null){
+            targetBox.rejectbox = [];
+        }
+        if (targetBox.rejectbox instanceof Array) {
+            if (condition instanceof Array)
+                targetBox.rejectbox.concat(condition);
+            else
+                targetBox.rejectbox.push(condition);
+        } else {
+            targetBox.rejectbox = [targetBox.acceptbox];
+        }
     }
     return this;
 };
-BoxMan.prototype.addConditionWithBox = function(targetBoxCondition, condition, data){
+BoxMan.prototype.addConditionWithBox = function(targetBoxCondition, conditionForBox, data){
     //Get Target
     var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
     //Set Condition Data
     for (var i=0; i<targetBoxList.length; i++){
         var targetBox = targetBoxList[i];
         targetBox.conditionbox.push({
-            condition:condition,
+            condition:conditionForBox,
             data:data
         });
     }
@@ -378,36 +398,66 @@ BoxMan.prototype.getConditionData = function(target, conditionDataList){
 
 
 BoxMan.prototype.addAcceptObj = function(targetBoxCondition, condition){
-    var el = getEl(targetBoxCondition).obj;
-    var manid = el.manid;
-    var boxObj = this.boxObjs[manid];
-    if (boxObj.acceptobj instanceof Array){
-        if (condition instanceof Array)
-            boxObj.acceptobj.concat(condition);
-        else
-            boxObj.acceptobj.push(condition);
-    }else{
-        boxObj.acceptobj = [boxObj.acceptobj];
+    //Get Target
+    var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
+    //Set Condition Data
+    for (var i=0; i<targetBoxList.length; i++) {
+        var targetBox = targetBoxList[i];
+        if (targetBox.acceptobj == undefined || targetBox.acceptobj == null){
+            targetBox.acceptobj = [];
+        }
+        if (targetBox.acceptobj instanceof Array) {
+            if (condition instanceof Array)
+                targetBox.acceptobj.concat(condition);
+            else
+                targetBox.acceptobj.push(condition);
+        } else {
+            targetBox.acceptobj = [targetBox.acceptobj];
+        }
     }
     return this;
 };
 BoxMan.prototype.addRejectObj = function(targetBoxCondition, condition){
-    var el = getEl(targetBoxCondition).obj;
-    var manid = el.manid;
-    var boxObj = this.boxObjs[manid];
-    if (boxObj.rejectobj instanceof Array){
-        if (condition instanceof Array)
-            boxObj.rejectobj.concat(condition);
-        else
-            boxObj.rejectobj.push(condition);
-    }else{
-        boxObj.rejectobj = [boxObj.rejectobj];
+    //Get Target
+    var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
+    //Set Condition Data
+    for (var i=0; i<targetBoxList.length; i++) {
+        var targetBox = targetBoxList[i];
+        if (targetBox.rejectobj == undefined || targetBox.rejectobj == null){
+            targetBox.rejectobj = [];
+        }
+        if (targetBox.rejectobj instanceof Array) {
+            if (condition instanceof Array)
+                targetBox.rejectobj.concat(condition);
+            else
+                targetBox.rejectobj.push(condition);
+        } else {
+            targetBox.rejectobj = [targetBox.rejectobj];
+        }
     }
     return this;
 };
-BoxMan.prototype.addConditionWithObj = function(targetBoxCondition, condition, data){
-    this.conditionobj;
+BoxMan.prototype.addConditionWithObj = function(targetBoxCondition, conditionForObj, data){
+    //Get Target
+    var targetBoxList = this.getBoxesByCondition(targetBoxCondition);
+    //Set Condition Data
+    for (var i=0; i<targetBoxList.length; i++){
+        var targetBox = targetBoxList[i];
+        targetBox.conditionobj.push({
+            condition:conditionForBox,
+            data:data
+        });
+    }
     return this;
+};
+BoxMan.prototype.suspendBox = function(suspendedBox, suspenderBox){
+    var suspendedEl = getEl(suspendedBox).obj;
+    var suspenderEl = getEl(suspenderBox).obj;
+    var top = suspenderEl.offsetTop + suspenderEl.offsetHeight;
+    var left = suspenderEl.offsetLeft;
+    suspendedEl.style.position = 'absolute';
+    suspendedEl.style.top = top + 'px';
+    suspendedEl.style.left = left + 'px';
 };
 
 
@@ -416,7 +466,8 @@ BoxMan.prototype.addConditionWithObj = function(targetBoxCondition, condition, d
  * ExBox
  *************************/
 BoxMan.prototype.addExBox = function(el){
-    if (el.getAttribute('data-exbox') == null && el.getAttribute('data-exbox') == undefined) el.setAttribute('data-exbox', '');
+    if (el.getAttribute('data-exbox') == null && el.getAttribute('data-exbox') == undefined)
+        el.setAttribute('data-exbox', '');
     var infoObj = {
         id:el.getAttribute('data-exbox-id')
     };
@@ -489,6 +540,18 @@ BoxMan.prototype.getExBox = function(param){
     }else{        
         return this.getExBoxByEl(param);
     }    
+};
+BoxMan.prototype.getElementByExBox = function(param){
+    var exBoxObj = this.getExBox(param);
+    return exBoxObj.el;
+};
+BoxMan.prototype.delExBox = function(param){
+    var obj = this.getExBox(param);
+    var el = obj.el;
+    var manid = el.manid;
+    delete this.exBoxObjs[manid];
+    el.parentNode.removeChild(el);
+    return this;
 };
 BoxMan.prototype.getExBoxes = function(){
     return this.exBoxObjs;
@@ -621,6 +684,20 @@ BoxMan.prototype.delObj = function(param){
     el.parentNode.removeChild(el);
     return this;
 };
+BoxMan.prototype.delObjByBox = function(box){
+    var resultObj = {};
+    var boxObj = this.getBox(box);
+    var boxEl = boxObj.el;
+    for (var i=0; i<boxEl.children.length; i++){
+        var child = boxEl.children[i];
+        if (child.getAttribute('data-obj') != null){
+            this.delObj(child);
+        }
+    }
+    return this;
+};
+
+
 BoxMan.prototype.getObj = function(param){
     if (typeof param == 'string'){        
         return this.getObjById(param);
@@ -632,6 +709,10 @@ BoxMan.prototype.getObj = function(param){
             return resultList[0];
     }
     return;
+};
+BoxMan.prototype.getElementByObj = function(param){
+    var objObj = this.getObj(param);
+    return objObj.el;
 };
 BoxMan.prototype.getObjs = function(){
     return this.objs;
@@ -690,6 +771,20 @@ BoxMan.prototype.getObjListByBox = function(box){
     }
     return resultList;
 };
+BoxMan.prototype.getObjAttributeListByBox = function(box){
+    var resultList = [];
+    var boxObj = this.getBox(box);
+    var boxEl = boxObj.el;
+    for (var i=0; i<boxEl.children.length; i++){
+        var child = boxEl.children[i];
+        if (child.getAttribute('data-obj') != null){
+            var manid = child.manid;
+            var objObj = this.objs[manid];
+            resultList.push(objObj.attribute);
+        }
+    }
+    return resultList;
+};
 
 
 
@@ -737,10 +832,6 @@ BoxMan.prototype.hasEvent = function(eventNm){
     var eventList = this.addedEventFuncs[eventNm];
     return (eventList && eventList.length > 0);
 };
-
-
-
-
 
 
 
@@ -812,7 +903,7 @@ BoxMan.prototype.whenMouseMove = function(event){
         this.setLastPos(event);
         event.preventDefault();
         /*** 객체 갈 곳 미리보기 ***/
-        this.setPreviewer(mvObj, event);
+      	this.setPreviewer(mvObj, event);
         /** mvObj 이동하여 표시하기 **/
         this.setMovingState(mvObj)
     }
@@ -863,6 +954,7 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
     var decidedBoxLevel = 0;
     var decidedFixedBox;
     var decidedFixedBoxLevel = 0;
+    var decidedPopManIndex = 0;
     /** 현재 마우스 위치의 박스객체 모으기 **/
     for (var boxNm in boxObjs){
         var el = boxObjs[boxNm].el;
@@ -870,20 +962,24 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
             mvObjOnThisBoxObjs.push(el);            
         }
     }
+    // console.log('get boxes: ', mvObjOnThisBoxObjs);
     /** 들어갈 박스 선정 **/
     for (var i=0; i<mvObjOnThisBoxObjs.length; i++){
         var parentObj = mvObjOnThisBoxObjs[i].parentNode;
         var domLevel = 0;
         var stopFlag = false;
         var flagIsFixed = false;
+        var popManIndex = 0; //POPMAN과 연계
         /* 자신이  fixed이면 flagIsFixed=true */
-        if (mvObjOnThisBoxObjs[i].style.position=='fixed') flagIsFixed = true;
+        if (mvObjOnThisBoxObjs[i].style.position=='fixed')
+            flagIsFixed = true;
 
         /* 상자의 domtree단계?? 파악하기 */
         while (parentObj){
             // 박스가 mvObj의 자식이면 건너뛰기
             if (parentObj == mvObj){
                 stopFlag=true;
+                console.log('뭣???');
                 break;
             }
             // 부모의 영역에 가려진 부분이면 건너뛰기
@@ -892,15 +988,35 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
             && parentObj != document.body.parentNode
             && parentObj != document.body.parentNode.parentNode){
                 stopFlag=true;
+                console.debug('뭣???!!!!', parentObj, lastPosX, lastPosY);
+                console.debug(parentObj, parentObj.scrollTop +'<'+ lastPosY +'<'+ (parentObj.offsetHeight + parentObj.scrollTop) );
+                // var a = getEl(parentObj).getBoundingClientRect();
+                // console.debug(a.left, a.top);
                 break;
             }
             // 조상 중에  fixed가 있다면 flagIsFixed=true
-            if (parentObj.style && parentObj.style.position=='fixed') flagIsFixed = true;
+            if (parentObj.style && parentObj.style.position=='fixed')
+                flagIsFixed = true;
             parentObj = parentObj.parentNode;
             domLevel++;
+            // POPMAN과 연계
+            if (parentObj && parentObj.getAttribute && parentObj.getAttribute('data-pop') != null){
+                popManIndex = parentObj.popIndex;
+            }
         }
         /* 박스가 mvObj의 자식이면 건너뛰기 */
-        if (stopFlag) continue;
+        if (stopFlag)
+            continue;
+
+        /* POPMAN연계*/
+        if (decidedPopManIndex < popManIndex) {
+            decidedPopManIndex = popManIndex;
+            decidedBoxLevel = domLevel;
+            decidedBox = mvObjOnThisBoxObjs[i];
+        }else if (decidedPopManIndex = popManIndex){
+        }else{
+            continue;
+        }
         /* 중첩된 상자들 중에서 domtree단계가 가장 깊은 것으로 결정하기 */
         /* fixed된 객체에 우선권을 주기위해 fixed객체이거나 그의 자손일 때 따로 저장 */
         if (flagIsFixed){
@@ -908,7 +1024,7 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
                 decidedFixedBoxLevel = domLevel;
                 decidedFixedBox = mvObjOnThisBoxObjs[i];
             }
-            /* 일반의 경우 저장 */
+        /* 일반의 경우 저장 */
         }else{
             if (decidedBoxLevel < domLevel){
                 decidedBoxLevel = domLevel;
@@ -919,28 +1035,28 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
     return (decidedFixedBox) ? decidedFixedBox : decidedBox;
 };
 BoxMan.prototype.getMovableObjCount = function(box){
-    var boxSize = 0;
+    var objCount = 0;
     if (box){
         for (var j=0; j<box.children.length; j++){
             var isMovableObj = box.children[j].getAttribute('data-obj');
             if (isMovableObj != null && isMovableObj != undefined && isMovableObj != 'false'){
-                boxSize++;
+                objCount++;
             }
         }
     }
-    return boxSize;
+    return objCount;
 };
-BoxMan.prototype.getMovableObj = function(box, event){    
-    if (box){        
+BoxMan.prototype.getMovableObj = function(box, event){
+    var meta = this.metaObj;
+    if (box){
         for (var j=0; j<box.children.length; j++){
             var obj = box.children[j];
             var isMovableObj = obj.getAttribute('data-obj');
             var isMovablePreviewer = obj.getAttribute('data-obj-previewer');
-            if (isMovablePreviewer != null 
-            || (isMovableObj != null && isMovableObj != undefined && isMovableObj != 'false')){                
-                var offset = getEl(obj).getBoundingClientRect();
-                var meta = this.metaObj;
-                if (this.isInBox(obj, meta.lastPosX, meta.lastPosY)){                    
+            if (isMovablePreviewer != null || (isMovableObj != null && isMovableObj != undefined && isMovableObj != 'false')){
+                // var offset = getEl(obj).getBoundingClientRect();
+                // console.log(offset, meta.lastPosY);
+                if (this.isInBox(obj, meta.lastPosX, meta.lastPosY)){
                     return obj;
                 }
             }
@@ -1224,9 +1340,9 @@ BoxMan.prototype.originalCopyBackToBefore = function(mvObj, boxEl, appendType, m
 
 
 
-BoxMan.prototype.createPreviewer = function(mvObj){ 
-    var meta = this.metaObj;
-    var mvObjPreviewClone = mvObj.cloneNode(true);
+BoxMan.prototype.createPreviewer = function(mvObj){
+	var meta = this.metaObj;
+	var mvObjPreviewClone = mvObj.cloneNode(true);
     mvObjPreviewClone.setAttribute('data-obj', 'false'); //undefined, null, true, false를 지정하면 조건식에서 정상적으로 작동을 안함. 스트링으로
     mvObjPreviewClone.setAttribute('data-obj-previewer', 'true'); 
     getEl(mvObjPreviewClone).clas.add('sj-preview-going-to-be-in-box');
@@ -1243,6 +1359,7 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     /** 가는 위치 미리 보여주기 **/
     var goingToBeInThisBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);    
     var boxEl = goingToBeInThisBox;
+    console.log(boxEl);
     var bfBoxInfo = this.getBox(mvObjBeforeBox);
     var afBoxInfo = this.getBox(boxEl);
     var objInfo = this.getObj(mvObj);
@@ -1269,33 +1386,42 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     var isRollback2 = ( isTypeBetween && !canEnter && !isSameBox );
     var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));
     var isRemoveOutOfBox = ( modeRemoveOutOfBox && !isToBox && !isSameBox);
-    var isNotOnlyToBox = ( modeOnlyBoxToBox && !isToBox && isFromBox);
+    var isNotOnlyToBox = ( !isTypeBetween && modeOnlyBoxToBox && !isToBox && isFromBox);
     var isAcceptedBox = ( !isToBox || getEl(bfBoxInfo).isAccepted(afBoxInfo.acceptbox, afBoxInfo.rejectbox) );
     var isAcceptedObj = ( !isToBox || getEl(objInfo).isAccepted(afBoxInfo.acceptobj, afBoxInfo.rejectobj) );
 
     // 갈 곳 미리보기 효과 (클론 효과)
     // 원위치로 지정
     if (isRollback || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
-        this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
+        console.log(isRollback, isNotOnlyToBox, !isAcceptedBox, !isAcceptedObj);
+        //
         if (modeRemoveOutOfBox && !isSameBox && !isToBox){
             if (mvObjPreviewClone.parentNode)
                 mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+            this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
             this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
             meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+            console.log('Back!!! 1');
             return;
         }
+        //
         if (!isAcceptedBox || !isAcceptedObj){
             meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+            this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
             this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
+            console.log('Back!!! 2');
             return;
         }
+        this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
         this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
         meta.lastGoingToBeInThisBox = goingToBeInThisBox;
         this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
+        console.log('Back!!! 3');
 
-    // 갈 예정인 박스안 지정
     }else{
+        // 갈 예정인 박스안 지정
         if (boxEl){
+            console.log('Box In ');
             //Back Up Moment
             if (isRollback2){
                 this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
@@ -1316,8 +1442,9 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
             }
             //Move Moment
             this.goTo(mvObjPreviewClone, goingToBeInThisBox, appendType, mvObjPreviewClone);
+        // 박스 밖으로 갈 예정
         }else{
-            // 박스 밖으로 갈 예정
+            console.log('Out Of Box ');
             if (lastGoingToBeInThisBox)
                 getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
             if (mvObjPreviewClone.parentNode)
@@ -1329,9 +1456,9 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     
 };
 BoxMan.prototype.deletePreviewer = function(){
-    // var getEl = this.getEl;
-    var meta = this.metaObj;    
-    var mvObjPreviewClone = meta.mvObjPreviewClone;
+	// var getEl = this.getEl;
+	var meta = this.metaObj;
+	var mvObjPreviewClone = meta.mvObjPreviewClone;
     var mvObjCloneList = meta.mvObjCloneList;
     /** 미리보기를 위한 mvObj클론 없애기 **/
     if (mvObjPreviewClone && mvObjPreviewClone.parentNode) {
@@ -1443,7 +1570,7 @@ BoxMan.prototype.setLastPos = function(event){
         meta.lastPosX = event.clientX + getEl().getBodyScrollX();
         meta.lastPosY = event.clientY + getEl().getBodyScrollY();
     }    
-    // console.log(meta.lastPosX, meta.additionalStartPosLeft, meta.mvObj.adjustX);
+    // console.debug(meta.lastPosX, meta.additionalStartPosLeft, meta.mvObj.adjustX);
     // meta.lastPosX -= meta.additionalStartPosLeft;
     // meta.lastPosY -= meta.additionalStartPosTop;
 };  
@@ -1452,12 +1579,14 @@ BoxMan.prototype.setLastPos = function(event){
 BoxMan.prototype.isInBox = function (target, objX, objY){       
     var targetBodyOffset = getEl(target).getBoundingClientRect();
     var targetBodyOffsetX = targetBodyOffset.left;
-    var targetBodyOffsetY = targetBodyOffset.top;            
+    var targetBodyOffsetY = targetBodyOffset.top;
+    // console.debug(target, objY,  target.offsetHeight, targetBodyOffset.top, target.scrollTop);
     /* 상자 안인지 판정 */
     if(targetBodyOffsetX + target.scrollLeft< objX
     && targetBodyOffsetX + target.offsetWidth + target.scrollLeft> objX
-    && targetBodyOffsetY + target.scrollTop< objY
-    && targetBodyOffsetY + target.offsetHeight + target.scrollTop > objY){
+    && targetBodyOffsetY + target.scrollTop< objY +target.scrollTop
+    && targetBodyOffsetY + target.offsetHeight + target.scrollTop > objY +target.scrollTop){
+        // console.debug(target, target.scrollTop +'<'+ objY +'<'+ (target.offsetHeight + target.scrollTop) );
         return true;        
     }
     return false;       
@@ -1502,14 +1631,14 @@ BoxMan.prototype.findAbsoluteParentEl = function(el){
     return searchSuperObj ? searchSuperObj : document.body;
 };
 
+BoxMan.prototype.getKeyboarder = function(){
+    return this.keyboarder;
+};
 
 
-
-/**
- * 테스트중
- * @param setupObj
- * @constructor
- */
+/*************************************************************
+ *  BOX
+ *************************************************************/
 function BoxManBox(setupObj){
     this.limit;
     this.acceptbox = [];
@@ -1526,22 +1655,26 @@ function BoxManBox(setupObj){
     this.mode = new BoxManMode();
 }
 
+/*************************************************************
+ *  OBJ
+ *************************************************************/
 function BoxManObj(setupObj){
 }
+
+/*************************************************************
+ *  EXBOX
+ *************************************************************/
 function BoxManExBox(setupObj){
 }
 
 
-/**
-* BoxManMode
-* @param setupObj
-* @constructor
-*/
+/*************************************************************
+ *  MODE
+ *************************************************************/
 function BoxManMode(modes){
     this.modes = {};
     this.set(modes);
 }
-
 BoxManMode.prototype = {
     set: function(param){
         if (param instanceof Object){
@@ -1585,5 +1718,158 @@ BoxManMode.prototype = {
             this.set(mode);
         }
         return this;
+    }
+};
+
+
+/*************************************************************
+ *  KEYBOARDER
+ *************************************************************/
+function BoxManKeyboarder(boxMan){
+    var that = this;
+    this.boxMan = boxMan;
+    this.selectorBox;
+    this.targetBox;
+
+    this.meta = {
+        goingToBeInThisBox:null,
+        isEventStarted: false,
+        keborderStatus: that.STATUS_NONE
+    };
+}
+BoxManKeyboarder.prototype = {
+    STATUS_NONE:0,
+    STATUS_MOVE:1,
+    STATUS_DROP:2,
+    setSelectorBox: function(box){
+        var that = this;
+        var meta = this.meta;
+        // Del
+        this.delSelectorBox();
+        // Set
+        var box = this.boxMan.getBox(box);
+        var el = box.el;
+        this.selectorBox = box;
+        // Set Attribute
+        el.setAttribute('data-status', 'selected');
+        // Set Event
+        if (!meta.isEventStarted){
+            meta.isEventStarted = true;
+            getEl(document).addEventListener('keydown', function(event){
+                if (that.selectorBox != null && that.selectorBox != undefined){
+                    if (event.keyCode == 38) //UP
+                        that.selectPrevObjInBox(that.selectorBox.el);
+                    if (event.keyCode == 40) //DOWN
+                        that.selectNextObjInBox(that.selectorBox.el);
+                    if (event.keyCode == 17) //CTRL
+                        that.handleKeyborderControler(that.selectorBox.el);
+                }
+            });
+        }
+    },
+    delSelectorBox: function(box){
+        var boxObj;
+        if (box != null && box != '')
+            boxObj = this.boxMan.getBox(box);
+        else
+            boxObj = this.selectorBox;
+
+        if (boxObj != null && boxObj != undefined){
+            var el = boxObj.el;
+            // Remove Attribute
+            if (el != null && el != undefined && el.getAttribute('data-status') == 'selected') {
+                el.removeAttribute('data-status');
+                this.selectorBox = undefined;
+                var objObj = this.getSelectedObjInBox(el);
+                if (objObj && objObj.el){
+                    objObj.el.removeAttribute('data-status');
+                }
+            }
+        }
+    },
+    setTargetBox: function(box){
+
+    },
+    handleKeyborderControler: function(box){
+        if (this.keborderStatus == this.STATUS_NONE){
+            this.keborderStatus = this.STATUS_MOVE;
+        }else if(this.keborderStatus == this.STATUS_MOVE){
+            this.keborderStatus = this.STATUS_DROP;
+            this.keborderStatus = this.STATUS_NONE;
+        }
+    },
+    selectNextObjInBox: function(box){
+        var selectedObjIndex = this.getSelectedObjIndexInBox(box);
+        this.deselectObjAllInBox(box);
+        this.selectObjInBoxByIndex(box, selectedObjIndex + 1);
+        return this;
+    },
+    selectPrevObjInBox: function(box){
+        var selectedObjIndex = this.getSelectedObjIndexInBox(box);
+        this.deselectObjAllInBox(box);
+        this.selectObjInBoxByIndex(box, selectedObjIndex - 1);
+        return this;
+    },
+    deselectObjAllInBox: function(box){
+        var boxObj = this.boxMan.getBox(box);
+        var boxEl = boxObj.el;
+        for (var i=0; i<boxEl.children.length; i++){
+            var child = boxEl.children[i];
+            if (child.getAttribute('data-obj') != null && child.getAttribute('data-status') != null)
+                child.removeAttribute('data-status');
+        }
+        return this;
+    },
+    selectObjInBoxByIndex: function(box, index){
+        var boxObj = this.boxMan.getBox(box);
+        var boxEl = boxObj.el;
+        var boxElSize = boxEl.children.length;
+        var objIndex = -1;
+        index = (index > 0) ? index : 0;
+        index = (index < boxElSize) ? index : boxElSize -1;
+        for (var i=0; i<boxEl.children.length; i++){
+            var child = boxEl.children[i];
+            if (child.getAttribute('data-obj') != null){
+                if ((++objIndex) == index){
+                    child.setAttribute('data-status', 'selected');
+                    break;
+                }
+            }
+        }
+        return this;
+    },
+    getSelectedObjInBox: function(box){
+        var boxObj = this.boxMan.getBox(box);
+        var boxEl = boxObj.el;
+        var objIndex = -1;
+        var resultElement;
+        for (var i=0; i<boxEl.children.length; i++){
+            var child = boxEl.children[i];
+            if (child.getAttribute('data-obj') != null){
+                objIndex++;
+                if (child.getAttribute('data-status') != null){
+                    resultElement = child;
+                    break;
+                }
+            }
+        }
+        return this.boxMan.getObj(resultElement);
+    },
+    getSelectedObjIndexInBox: function(box){
+        var boxObj = this.boxMan.getBox(box);
+        var boxEl = boxObj.el;
+        var objIndex = -1;
+        var result = objIndex;
+        for (var i=0; i<boxEl.children.length; i++){
+            var child = boxEl.children[i];
+            if (child.getAttribute('data-obj') != null){
+                objIndex++;
+                if (child.getAttribute('data-status') != null){
+                    result = objIndex;
+                    break;
+                }
+            }
+        }
+        return result;
     }
 };

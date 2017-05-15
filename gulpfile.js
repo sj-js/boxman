@@ -157,5 +157,6 @@ gulp.task('run', shell.task([
 gulp.task('default.bak', ['server','js','css','res','html','watch', 'shell']);
 gulp.task('bower', ['bower-install','bower-update']);
 gulp.task('build', ['js','css','res','html']);
-gulp.task('default', ['run','build','watch']);
+gulp.task('default', ['build']);
+gulp.task('start', ['run','build','watch']);
 gulp.task('dev', ['js','css','res','html','watch']);
