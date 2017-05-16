@@ -903,7 +903,7 @@ BoxMan.prototype.whenMouseMove = function(event){
         this.setLastPos(event);
         event.preventDefault();
         /*** 객체 갈 곳 미리보기 ***/
-        this.setPreviewer(mvObj, event);
+      	this.setPreviewer(mvObj, event);
         /** mvObj 이동하여 표시하기 **/
         this.setMovingState(mvObj)
     }

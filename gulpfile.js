@@ -78,7 +78,7 @@ gulp.task('js', ['clean-js'], function(){
 			.pipe(concat(package.name +'.js'))
 			.pipe(gulp.dest(paths.dest.js))
 			.pipe(stripDebug())
-			.pipe(uglify({mangle:{toplevel:true}}))
+			.pipe(uglify({mangle:{toplevel:false}}))
 			.pipe(rename({suffix:fileSuffix}))
 			.pipe(gulp.dest(paths.dest.js));
 });
