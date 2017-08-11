@@ -7,8 +7,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/souljungkim/boxman.git",
-    "web": "https://github.com/souljungkim/boxman"
+    "url": "https://github.com/sj-js/boxman.git",
+    "web": "https://github.com/sj-js/boxman"
   },
   "devDependencies": {
     "gulp": "^3.9.0",

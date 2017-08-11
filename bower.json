@@ -5,7 +5,7 @@
   "authors": ["SJ <souljungkim@gmail.com>"],
   "license": "MIT",
   "keywords": ["boxman", "drag", "drop", "div", "movable", "put"],
-  "homepage": "https://github.com/souljungkim/boxman",
+  "homepage": "https://github.com/sj-js/boxman",
   "ignore": [
     "**/.*",
     "node_modules",
