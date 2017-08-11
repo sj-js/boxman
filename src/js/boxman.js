@@ -17,6 +17,7 @@ function BoxMan(setupObj){
             cover.style.position = 'absolute';
             cover.style.top = '0px';
             cover.style.left = '0px';
+            cover.parentElement = element;
             that.cover = cover;
             getEl(cover).clas.add('sj-obj-exbox');
             getEl(cover).addEventListener('dragenter', that.handleDragEnter(that, cover));
@@ -238,15 +239,16 @@ BoxMan.prototype.handleDragOut = function(that, element){
 BoxMan.prototype.handleDrop = function(that, element){
     var element = getEl(element).obj;
     return function(event){
-        console.log('drop');
+        console.log('drop', element == that.cover);
         event.stopPropagation();
         event.preventDefault();
         //- Drop Event
         var files = (event.originalEvent) ? event.originalEvent.dataTransfer.files : (event.dataTransfer) ? event.dataTransfer.files : '';
         event.exbox = {files:files};
-        // that.execEventListener(element, 'external', event);
         //- Clear DragOver View
         if (element == that.cover){
+            var eventElement = that.cover.parentElement;
+            that.execEventListener(eventElement, 'external', event);
             that.cover.parentNode.removeChild(that.cover);
         }
     }
