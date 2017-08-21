@@ -6,8 +6,15 @@ os:
 before_script:
 - npm install -g gulp
 script: gulp
+
+cache:
+  directories:
+    - "node_modules"
+
 before_deploy:
   - pwd
+  - ls dist/js/
+  
 deploy:
   provider: releases
   api_key:
