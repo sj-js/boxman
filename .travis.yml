@@ -6,6 +6,8 @@ os:
 before_script:
 - npm install -g gulp
 script: gulp
+before_deploy:
+  - pwd
 deploy:
   provider: releases
   api_key:
@@ -13,3 +15,4 @@ deploy:
   file: dist/js/*.min.js
   on:
     repo: sj-js/boxman
+    branch: master
