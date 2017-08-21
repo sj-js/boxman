@@ -1,0 +1,15 @@
+language: node_js
+node_js:
+- node
+os:
+- linux
+before_script:
+- npm install -g gulp-cli
+script: gulp
+deploy:
+  provider: releases
+  api_key:
+    secure: fsabcd20btr1rvjsr+wHH2+O5WywHwNEnqn7oAwqCAzx5GOyPg3hfk/nQSyVqkG2BLfudeoy9fAmeQgR3mwU3DJ/IpqsN7f5gwBqzZCc9E85V+ZjjjHByD8QN8r/8HgwyYFqbfcCS84EMVreqfv+4ABEKBKAXsIaPB5NnXVM71lWGX0ipNTSgBITC6YJpP5MgPipsPJdJg1KVnxz1+zMxEojvuTZfw6pQI6oBHQRL5VVRQK1xQLaf8gP+HT+TnPbtJnhYi77hF6PvKX/m39+J2dM2pb+JRhWNwpT242OJgFRa3D25FKmIFWkd0QZqCsvte/ojVgERI/vc1tEuWPL33DYs6oNkRvMP4l47VCvufUmDD55WFODfVnrdtLBfB2KFueiopzeWQmJbogawXh9OFCJma55NmQ/sOTgSkqw0U4q/yYOVddQsdBnWv++rTNX6/wgQIq85ppb6pIBoMzjsVXbGBnZxp0FUF/18+eVjYns2B+ajUv3Pwz8x4H6sAGlAqOAHi0HbqvSaeQC9VU4rFrxY9r7LKL79MRfHpT8Ild+51V7FhDDB4rD+cd3B3ZhvkvnavHl/r5tkwq9QkxPEizJrNcTZ1LDRHya9VOpil5WvFZiTZ7l/5MG1+bRJAM3Wy4Nhc7eZr32Ahn/CYGYcILpHLJxE4Ak3Xzpy91zVS8=
+  file: dist/js/*.min.js
+  on:
+    repo: sj-js/boxman
