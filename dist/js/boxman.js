@@ -53,6 +53,9 @@ function BoxMan(setupObj){
         mvObjPreviewOriginalClone:undefined,
         mvObjStartBodyOffset:undefined,
         mvObjCloneList:[],
+
+        mvObjAppendTypeBefore:undefined,
+        mvObjOriginalBox:undefined,
         mvObjOriginalShelterList:[],
         cam:{
             w:window.innerWidth,
@@ -159,7 +162,6 @@ BoxMan.prototype.detect = function(afterDetectFunc){
 };
 BoxMan.prototype.afterDetect = function(func){
     var that = this;
-    // that.afterDetectFuncList.push(func);
     that.addEventListenerByEventName('afterdetect', func);
     return this;
 };
@@ -929,7 +931,7 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
     // console.log('get boxes: ', mvObjOnThisBoxObjs);
     /** 들어갈 박스 선정 **/
     for (var i=0; i<mvObjOnThisBoxObjs.length; i++){
-        var parentObj = mvObjOnThisBoxObjs[i].parentNode;
+        var parentElement = mvObjOnThisBoxObjs[i].parentNode;
         var domLevel = 0;
         var stopFlag = false;
         var flagIsFixed = false;
@@ -939,39 +941,41 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
             flagIsFixed = true;
 
         /* 상자의 domtree단계?? 파악하기 */
-        while (parentObj){
+        while (parentElement){
             // 박스가 mvObj의 자식이면 건너뛰기
-            if (parentObj == mvObj){
+            if (parentElement == mvObj){
                 stopFlag=true;
                 console.log('뭣???');
                 break;
             }
             // 부모의 영역에 가려진 부분이면 건너뛰기
-            if (!this.isInBox(parentObj, lastPosX, lastPosY)
-            && parentObj != document.body
-            && parentObj != document.body.parentNode
-            && parentObj != document.body.parentNode.parentNode){
+            if (!this.isInBox(parentElement, lastPosX, lastPosY)
+            && parentElement != document.body
+            && parentElement != document.body.parentNode
+            && parentElement != document.body.parentNode.parentNode){
                 stopFlag=true;
-                console.debug('뭣???!!!!', parentObj, lastPosX, lastPosY);
-                console.debug(parentObj, parentObj.scrollTop +'<'+ lastPosY +'<'+ (parentObj.offsetHeight + parentObj.scrollTop) );
+                console.debug('뭣???!!!!', parentElement, lastPosX, lastPosY);
+                console.debug(parentElement, parentElement.scrollTop +'<'+ lastPosY +'<'+ (parentElement.offsetHeight + parentElement.scrollTop) );
                 // var a = getEl(parentObj).getBoundingClientRect();
                 // console.debug(a.left, a.top);
                 break;
             }
             // 조상 중에  fixed가 있다면 flagIsFixed=true
-            if (parentObj.style && parentObj.style.position=='fixed')
+            if (parentElement.style && parentElement.style.position=='fixed')
                 flagIsFixed = true;
             // POPMAN과 연계
-            if (parentObj && parentObj.getAttribute && parentObj.getAttribute('data-pop') != null){
-                popManIndex = parentObj.popIndex;
+            if (this.isPropManObj(parentElement)){
+                popManIndex = parentElement.popIndex;
             }
-            parentObj = parentObj.parentNode;
+            parentElement = parentElement.parentNode;
             domLevel++;
             // POPMAN과 연계
             // if (parentObj && parentObj.getAttribute && parentObj.getAttribute('data-pop') != null){
             //     popManIndex = parentObj.popIndex;
             // }
         }
+        console.debug(decidedBox, parentElement, domLevel, stopFlag);
+
         /* 박스가 mvObj의 자식이면 건너뛰기 */
         if (stopFlag)
             continue;
@@ -981,7 +985,7 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
             decidedPopManIndex = popManIndex;
             decidedBoxLevel = domLevel;
             decidedBox = mvObjOnThisBoxObjs[i];
-        }else if (decidedPopManIndex = popManIndex){
+        }else if (decidedPopManIndex == popManIndex){
         }else{
             continue;
         }
@@ -1047,9 +1051,16 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
     mvObj.style.zIndex = getData().findHighestZIndex(['div']) + 1; // 이동객체에 가장 높은 zIndex 설정
     meta.lastGoingToBeInThisBox = meta.mvObjBeforeBox;
 
-    meta.mode.clear()
-             .merge(this.globalSetup)
-             .merge(this.getBox(meta.mvObjBeforeBox).mode);
+
+    meta.mode.clear().merge(this.globalSetup);
+    var beforeBox = this.getBox(meta.mvObjBeforeBox);
+    if (beforeBox)
+        meta.mode.merge(beforeBox.mode);
+
+    // meta.mode.clear()
+    //     .merge(this.globalSetup)
+    //     .merge(this.getBox(meta.mvObjBeforeBox).mode);
+
 
     if (mvObj.parentNode != document.body){                
         var o = this.findAbsoluteParentEl(mvObj);
@@ -1358,6 +1369,7 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
         canEnter = ( afBoxInfo.limit > this.getMovableObjCount(boxEl) || afBoxInfo.limit == undefined );
     }
     var appendType = mode.get('appendType');
+    meta.mvObjAppendTypeBefore = appendType;
     var modeRemoveOutOfBox = mode.get('modeRemoveOutOfBox');
     var modeOnlyBoxToBox = mode.get('modeOnlyBoxToBox');
     var modeCopy = mode.get('modeCopy');
@@ -1376,7 +1388,7 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     // 갈 곳 미리보기 효과 (클론 효과)
     // 원위치로 지정
     if (isRollback || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
-        // console.log(isRollback, isNotOnlyToBox, 'ACCPETBOX:'+isAcceptedBox, 'ACCPETOBJ:'+isAcceptedObj, 'TOBOX:'+isToBox, 'FROMBOX:'+isFromBox);
+        console.log(isRollback, isNotOnlyToBox, 'ACCPETBOX:'+isAcceptedBox, 'ACCPETOBJ:'+isAcceptedObj, 'TOBOX:'+isToBox, 'FROMBOX:'+isFromBox, modeRemoveOutOfBox, isSameBox, isToBox);
         if (modeRemoveOutOfBox && !isSameBox && !isToBox){
             if (mvObjPreviewClone.parentNode)
                 mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
@@ -1480,6 +1492,8 @@ BoxMan.prototype.overWriteAndSwapPreview = function(goingToBeInThisBox, appendTy
         }
         //2.미리보기 지우기
         this.deletePreviewer();
+        if (meta.mvObjAppendTypeBefore != BoxMan.APPEND_TYPE_SWAP && meta.mvObjAppendTypeBefore  != BoxMan.APPEND_TYPE_OVERWRITE)
+            return;
         //3.새toBox가 상자이면, 안의 OBJECT들을 백업하여 fromBox에 미리보기로 보여주기.
         if (goingToBeInThisBox && goingToBeInThisBox != meta.mvObjBeforeBox) {
             meta.mvObjOriginalBox = goingToBeInThisBox;
@@ -1544,6 +1558,7 @@ BoxMan.prototype.setMaxSize = function(event){
         meta.cam.w = w;
         meta.cam.h = h;
     // }
+    console.log(meta.cam);
 };
 BoxMan.prototype.setLastPos = function(event){ 
     var meta = this.metaObj;
@@ -1562,7 +1577,7 @@ BoxMan.prototype.setLastPos = function(event){
 };  
 /* X,Y가 영역 안에 존재하는지 확인
  * 의존 : getBoundingClientRect()  */
-BoxMan.prototype.isInBox = function (target, objX, objY){       
+BoxMan.prototype.isInBox = function (target, objX, objY){
     var targetBodyOffset = getEl(target).getBoundingClientRect();
     var targetBodyOffsetX = targetBodyOffset.left;
     var targetBodyOffsetY = targetBodyOffset.top;
@@ -1578,7 +1593,9 @@ BoxMan.prototype.isInBox = function (target, objX, objY){
     return false;       
 };
 
-
+BoxMan.prototype.isPropManObj = function(element){
+    return (element && element.getAttribute && element.getAttribute('data-pop') != null);
+}
 
 BoxMan.prototype.setTimer = function(event){    
     // var getEl = this.getEl;
@@ -1861,3 +1878,12 @@ BoxManKeyboarder.prototype = {
         return result;
     }
 };
+
+
+
+/*************************
+ * Exports
+ *************************/
+try {
+    module.exports = exports = BoxMan;
+} catch (e) {}
