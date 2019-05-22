@@ -36,15 +36,22 @@ function BoxMan(setupObj){
 
 
     this.globalSetup = {
-        modeTest:false,
-        modeCopy:false,
-        modeOnlyBoxToBox:true,
-        modeRemoveOutOfBox:false,
-        appendType:BoxMan.APPEND_TYPE_LAST
-    }
+        modeTest: false,
+        testBoxClass: null,
+        testBoxBorderWidth: '1px',
+        testBoxBorderColor: '#f8e',
+        testObjClass: null,
+        testObjBorderWidth: '1px',
+        testObjBorderColor: '#7effb4',
+        modeCopy: false,
+        modeOnlyBoxToBox: true,
+        modeRemoveOutOfBox: false,
+        appendType: BoxMan.APPEND_TYPE_LAST
+    };
     this.globalSetupForBox = {};
     this.globalSetupForObj = {};
     this.globalSetupForExBox = {};
+
     this.metaObj = {
         mvObj:undefined,
         isOnDown:false,
@@ -68,7 +75,7 @@ function BoxMan(setupObj){
         mode:new BoxManMode(this.globalSetup)
     };
     if (setupObj)
-        this.set(setupObj);
+        this.setup(setupObj);
 
     getEl().ready(function(){
         getEl().resize(function(){
@@ -113,10 +120,11 @@ BoxMan.APPEND_TYPE_INVISIBLE = 6;
  * GLOBAL SETUP
  *
  *************************/
-BoxMan.prototype.set = function(setupObj){
-    for (var objName in setupObj){
-        this.globalSetup[objName] = setupObj[objName];
+BoxMan.prototype.setup = function(options){
+    for (var objName in options){
+        this.globalSetup[objName] = options[objName];
     }
+    return this;
 };
 
 /*************************
@@ -242,7 +250,6 @@ BoxMan.prototype.handleDragEnter = function(that, element){
 BoxMan.prototype.handleDragOver = function(that, element){
     var element = getEl(element).obj;
     return function(event){
-        // console.log('over', element, that.cover);
         event.stopPropagation();
         event.preventDefault();
         event.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
@@ -303,6 +310,8 @@ BoxMan.prototype.addBox = function(element){
         boxinout:element.getAttribute('data-event-boxinout'),
         beforeboxin:element.getAttribute('data-event-beforeboxin'),
         mustdo:element.getAttribute('data-event-mustdo'),
+        swappedin:element.getAttribute('data-event-swappedin'),
+        swappedout:element.getAttribute('data-event-swappedout'),
         external:element.getAttribute('data-event-external')
     });
 };
@@ -340,7 +349,7 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
         getEl(element).clas.add('sj-obj-box');
     }
     //MAN ID 적용
-    var manid = (infoObj.manid) ? infoObj.manid : getEl(boxObjs).getNewSeqId('tmpBox');
+    var manid = (infoObj.manid) ? infoObj.manid : getEl(boxObjs).getNewSeqId('tmpBox'); //TODO: manid에 대한 재정의 필요
     var id = (infoObj.id) ? infoObj.id : element.id;
     element.manid = manid;
     element.id = id;
@@ -359,7 +368,7 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
     }
     //Set View
     this.setBoxView(o);
-    this.setTestView(o, that.globalSetup);
+    this.setTestViewForBox(o, that.globalSetup);
     //부모 DOM에 추가
     if (parentElement)
         getEl(parentElement).add(element);
@@ -375,28 +384,50 @@ BoxMan.prototype.setBoxView = function(infoObj){
         if (infoObj.width && infoObj.height) element.style.backgroundSize = infoObj.width+' '+infoObj.height;
         if (infoObj.width) element.style.width = infoObj.width;
         if (infoObj.height) element.style.height = infoObj.height;
+        if (infoObj.minWidth) element.style.minWidth = infoObj.minWidth;
+        if (infoObj.minHeight) element.style.minHeight = infoObj.minHeight;
         if (infoObj.class) getEl(element).clas.add(infoObj.class);
         if (infoObj.clazz) getEl(element).clas.add(infoObj.clazz);
         if (infoObj.content) element.innerHTML = infoObj.content;
     }
 };
-BoxMan.prototype.setTestView = function(infoObj, globalSetup){
+BoxMan.prototype.setTestViewForBox = function(infoObj, globalSetup){
+    var element = infoObj.element;
     if (globalSetup.modeTest){
-        var element = infoObj.element;
-        element.style.border = '1px solid black';
+        if (globalSetup.testBoxClass){
+            getEl(element).addClass(globalSetup.testBoxClass);
+        }
+        if (globalSetup.testBoxBorderWidth){
+            element.style.borderWidth = globalSetup.testBoxBorderWidth;
+        }
+        if (globalSetup.testBoxBorderColor){
+            element.style.borderColor = globalSetup.testBoxBorderColor;
+        }
+    }
+};
+BoxMan.prototype.setTestViewForObj = function(infoObj, globalSetup){
+    var element = infoObj.element;
+    if (globalSetup.modeTest){
+        if (globalSetup.testObjClass){
+            getEl(element).addClass(globalSetup.testObjClass);
+        }
+        if (globalSetup.testObjBorderWidth){
+            element.style.borderWidth = globalSetup.testObjBorderWidth;
+        }
+        if (globalSetup.testObjBorderColor){
+            element.style.borderColor = globalSetup.testObjBorderColor;
+        }
     }
 };
 BoxMan.prototype.setBoxEvent = function(infoObj){
     var element = infoObj.element;
     //Event 추가
     if (infoObj.start){
-        console.log('add start event', infoObj.start);
         // this.addEventListener(element, 'start', new Function('event', infoObj.start));
         this.addEventListener(element, 'start', infoObj.start);
         this.execEventListener(element, 'start', {box:element, obj:undefined, boxSize:this.getMovableObjCount(element)});
     }
     if (infoObj.boxin){
-        console.log('add boxin event', infoObj.boxin);
         this.addEventListener(element, 'boxin', new Function('event', infoObj.boxin));
     }
     if (infoObj.boxout){
@@ -410,6 +441,12 @@ BoxMan.prototype.setBoxEvent = function(infoObj){
     }
     if (infoObj.mustdo){
         this.addEventListener(element, 'mustdo', new Function('event', infoObj.mustdo));
+    }
+    if (infoObj.swappedin){
+        this.addEventListener(element, 'swappedin', new Function('event', infoObj.swappedin));
+    }
+    if (infoObj.swappedout){
+        this.addEventListener(element, 'swappedout', new Function('event', infoObj.swappedout));
     }
     if (infoObj.external){
         this.addEventListener(element, 'external', new Function('event', infoObj.external));
@@ -709,13 +746,15 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
         if (o.width && o.height) element.style.backgroundSize = o.width+' '+o.height;
         if (o.width) element.style.width = o.width;
         if (o.height) element.style.height = o.height;
+        if (o.minWidth) element.style.minWidth = o.minWidth;
+        if (o.minHeight) element.style.minHeight = o.minHeight;
         if (o.class) getEl(element).clas.add(o.class);
         if (o.clazz) getEl(element).clas.add(o.clazz);
         if (o.content) element.innerHTML = o.content;
     }
     element.style.left = element.offsetLeft + 'px';
     element.style.top = element.offsetTop + 'px';
-    this.setTestView(o, that.globalSetup);
+    this.setTestViewForObj(o, that.globalSetup);
     // DOM에 추가
     if (parentElement)
         getEl(parentElement).add(element);
