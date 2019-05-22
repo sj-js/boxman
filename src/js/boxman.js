@@ -9,14 +9,15 @@ function BoxMan(setupObj){
             getEl(element).addEventListener('dragover', that.handleDragOver(that, element));
             getEl(element).addEventListener('dragleave', that.handleDragOut(that, element));
             getEl(element).addEventListener('drop', that.handleDrop(that, element));
+            var rect = getEl(element).getBoundingClientRect();
             //Make Cover
             var cover = newEl('div');
-            cover.style.width = '100%';
-            cover.style.height = '100%';
+            cover.style.width = rect.width;
+            cover.style.height = rect.height;
             cover.style.background = "rgba(0,0,0,0.5)";
             cover.style.position = 'absolute';
-            cover.style.top = '0px';
-            cover.style.left = '0px';
+            cover.style.top = rect.top;
+            cover.style.left = rect.left;
             cover.parentElement = element;
             that.cover = cover;
             getEl(cover).clas.add('sj-obj-exbox');
@@ -35,14 +36,22 @@ function BoxMan(setupObj){
 
 
     this.globalSetup = {
-        modeCopy:false,
-        modeOnlyBoxToBox:true,
-        modeRemoveOutOfBox:false,
-        appendType:BoxMan.APPEND_TYPE_LAST
-    }
+        modeTest: false,
+        testBoxClass: null,
+        testBoxBorderWidth: '1px',
+        testBoxBorderColor: '#f8e',
+        testObjClass: null,
+        testObjBorderWidth: '1px',
+        testObjBorderColor: '#7effb4',
+        modeCopy: false,
+        modeOnlyBoxToBox: true,
+        modeRemoveOutOfBox: false,
+        appendType: BoxMan.APPEND_TYPE_LAST
+    };
     this.globalSetupForBox = {};
     this.globalSetupForObj = {};
     this.globalSetupForExBox = {};
+
     this.metaObj = {
         mvObj:undefined,
         isOnDown:false,
@@ -66,7 +75,7 @@ function BoxMan(setupObj){
         mode:new BoxManMode(this.globalSetup)
     };
     if (setupObj)
-        this.set(setupObj);
+        this.setup(setupObj);
 
     getEl().ready(function(){
         getEl().resize(function(){
@@ -88,6 +97,12 @@ function BoxMan(setupObj){
     return this;
 }
 
+/*************************
+ * Exports
+ *************************/
+try {
+    module.exports = exports = BoxMan;
+} catch (e) {}
 
 
 
@@ -105,10 +120,11 @@ BoxMan.APPEND_TYPE_INVISIBLE = 6;
  * GLOBAL SETUP
  *
  *************************/
-BoxMan.prototype.set = function(setupObj){
-    for (var objName in setupObj){
-        this.globalSetup[objName] = setupObj[objName];
+BoxMan.prototype.setup = function(options){
+    for (var objName in options){
+        this.globalSetup[objName] = options[objName];
     }
+    return this;
 };
 
 /*************************
@@ -131,6 +147,20 @@ BoxMan.prototype.clone = function(param){
     }
     this.setObj(copyElement, copyInfo);
     return copyElement;
+};
+
+/*************************
+ *
+ * When document is ready
+ *
+ *************************/
+BoxMan.prototype.ready = function(afterDetectFunc){
+    var that = this;
+    if (afterDetectFunc){
+        getEl().ready(function(){
+            afterDetectFunc(that);
+        });
+    }
 };
 
 /*************************
@@ -208,7 +238,7 @@ BoxMan.prototype.execEvent                      = function(eventMap, eventNm, ev
 BoxMan.prototype.handleDragEnter = function(that, element){
     var element = getEl(element).obj;
     return function(event){
-        console.log('enter');
+        console.log('enter', element, that.cover);
         event.stopPropagation();
         event.preventDefault();
         event.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
@@ -228,7 +258,7 @@ BoxMan.prototype.handleDragOver = function(that, element){
 BoxMan.prototype.handleDragOut = function(that, element){
     var element = getEl(element).obj;
     return function(event){
-        console.log('out');
+        // console.log('out', element, that.cover);
         event.stopPropagation();
         event.preventDefault();
         event.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
@@ -241,7 +271,7 @@ BoxMan.prototype.handleDragOut = function(that, element){
 BoxMan.prototype.handleDrop = function(that, element){
     var element = getEl(element).obj;
     return function(event){
-        console.log('drop', element == that.cover);
+        console.log('drop', element == that.cover, document.body == that.cover.parentElement);
         event.stopPropagation();
         event.preventDefault();
         //- Drop Event
@@ -251,7 +281,8 @@ BoxMan.prototype.handleDrop = function(that, element){
         if (element == that.cover){
             var eventElement = that.cover.parentElement;
             that.execEventListener(eventElement, 'external', event);
-            that.cover.parentNode.removeChild(that.cover);
+            getEl(that.cover).removeFromParent();
+            // that.cover.parentNode.removeChild(that.cover);
         }
     }
 };
@@ -273,19 +304,23 @@ BoxMan.prototype.addBox = function(element){
         rejectbox:getData(element.getAttribute('data-reject-box')).parse(),
         acceptobj:getData(element.getAttribute('data-accept-obj')).parse(),
         rejectobj:getData(element.getAttribute('data-reject-obj')).parse(),
-        conditionbox:[],
-        conditionobj:[],
         start:element.getAttribute('data-event-start'),
         boxin:element.getAttribute('data-event-boxin'),
         boxout:element.getAttribute('data-event-boxout'),
         boxinout:element.getAttribute('data-event-boxinout'),
         beforeboxin:element.getAttribute('data-event-beforeboxin'),
+        mustdo:element.getAttribute('data-event-mustdo'),
+        swappedin:element.getAttribute('data-event-swappedin'),
+        swappedout:element.getAttribute('data-event-swappedout'),
         external:element.getAttribute('data-event-external')
     });
 };
 BoxMan.prototype.newBox = function(infoObj){
     var newElement = newEl('div', {'data-box':'true'}, '');
     var parentElement;
+    if (!infoObj){
+        infoObj = { parent: document.body };
+    }
     if (infoObj.parent){
         if (typeof parent == 'string'){
             parentElement = document.getElementById(infoObj.parent);
@@ -302,7 +337,10 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
     var that = this;
     var boxObjs = this.boxObjs;
     element = getEl(element).obj;
+    //Init
     infoObj = (infoObj) ? infoObj : {};
+    infoObj.conditionbox = [];
+    infoObj.conditionobj = [];
     //이중적용 방지
     if (element.isAdaptedBox){
         return false;
@@ -311,12 +349,14 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
         getEl(element).clas.add('sj-obj-box');
     }
     //MAN ID 적용
-    var manid = (infoObj.manid)? infoObj.manid : getEl(boxObjs).getNewSeqId('tmpBox');
+    var manid = (infoObj.manid) ? infoObj.manid : getEl(boxObjs).getNewSeqId('tmpBox'); //TODO: manid에 대한 재정의 필요
+    var id = (infoObj.id) ? infoObj.id : element.id;
     element.manid = manid;
+    element.id = id;
     //컬렉션에 저장
     this.boxObjs[manid] = infoObj;
     this.boxObjs[manid].element = element;
-    this.boxObjs[manid].id = element.id;
+    this.boxObjs[manid].id = id;
     this.boxObjs[manid].manid = manid;
     this.boxObjs[manid].mode = new BoxManMode();
     //Global & Local 설정
@@ -328,6 +368,7 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
     }
     //Set View
     this.setBoxView(o);
+    this.setTestViewForBox(o, that.globalSetup);
     //부모 DOM에 추가
     if (parentElement)
         getEl(parentElement).add(element);
@@ -338,24 +379,55 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
 BoxMan.prototype.setBoxView = function(infoObj){
     var element = infoObj.element;
     if (infoObj){
+        console.log('set data check', infoObj);
         if (infoObj.imgURL) element.style.background = 'url("'+ infoObj.imgURL +'")';
         if (infoObj.width && infoObj.height) element.style.backgroundSize = infoObj.width+' '+infoObj.height;
         if (infoObj.width) element.style.width = infoObj.width;
         if (infoObj.height) element.style.height = infoObj.height;
-        if (infoObj.class) getEl(element).clas.add(o.class);
-        if (infoObj.clazz) getEl(element).clas.add(o.clazz);
+        if (infoObj.minWidth) element.style.minWidth = infoObj.minWidth;
+        if (infoObj.minHeight) element.style.minHeight = infoObj.minHeight;
+        if (infoObj.class) getEl(element).clas.add(infoObj.class);
+        if (infoObj.clazz) getEl(element).clas.add(infoObj.clazz);
         if (infoObj.content) element.innerHTML = infoObj.content;
+    }
+};
+BoxMan.prototype.setTestViewForBox = function(infoObj, globalSetup){
+    var element = infoObj.element;
+    if (globalSetup.modeTest){
+        if (globalSetup.testBoxClass){
+            getEl(element).addClass(globalSetup.testBoxClass);
+        }
+        if (globalSetup.testBoxBorderWidth){
+            element.style.borderWidth = globalSetup.testBoxBorderWidth;
+        }
+        if (globalSetup.testBoxBorderColor){
+            element.style.borderColor = globalSetup.testBoxBorderColor;
+        }
+    }
+};
+BoxMan.prototype.setTestViewForObj = function(infoObj, globalSetup){
+    var element = infoObj.element;
+    if (globalSetup.modeTest){
+        if (globalSetup.testObjClass){
+            getEl(element).addClass(globalSetup.testObjClass);
+        }
+        if (globalSetup.testObjBorderWidth){
+            element.style.borderWidth = globalSetup.testObjBorderWidth;
+        }
+        if (globalSetup.testObjBorderColor){
+            element.style.borderColor = globalSetup.testObjBorderColor;
+        }
     }
 };
 BoxMan.prototype.setBoxEvent = function(infoObj){
     var element = infoObj.element;
     //Event 추가
     if (infoObj.start){
-        this.addEventListener(element, 'start', new Function('event', infoObj.start));
-        this.execEventListener('start', {box:element, obj:undefined, boxSize:this.getMovableObjCount(element)});
+        // this.addEventListener(element, 'start', new Function('event', infoObj.start));
+        this.addEventListener(element, 'start', infoObj.start);
+        this.execEventListener(element, 'start', {box:element, obj:undefined, boxSize:this.getMovableObjCount(element)});
     }
     if (infoObj.boxin){
-        console.log('add boxin', infoObj.boxin);
         this.addEventListener(element, 'boxin', new Function('event', infoObj.boxin));
     }
     if (infoObj.boxout){
@@ -366,6 +438,15 @@ BoxMan.prototype.setBoxEvent = function(infoObj){
     }
     if (infoObj.beforeboxin){
         this.addEventListener(element, 'beforeboxin', new Function('event', infoObj.beforeboxin));
+    }
+    if (infoObj.mustdo){
+        this.addEventListener(element, 'mustdo', new Function('event', infoObj.mustdo));
+    }
+    if (infoObj.swappedin){
+        this.addEventListener(element, 'swappedin', new Function('event', infoObj.swappedin));
+    }
+    if (infoObj.swappedout){
+        this.addEventListener(element, 'swappedout', new Function('event', infoObj.swappedout));
     }
     if (infoObj.external){
         this.addEventListener(element, 'external', new Function('event', infoObj.external));
@@ -616,6 +697,12 @@ BoxMan.prototype.newObj = function(infoObj, attributes){
     var newElement = newEl('div', attributes, '');
     //Check Parent Element
     var parentElement;
+    if (!infoObj){
+        infoObj = { parent: document.body };
+    }
+    if (infoObj.id){
+        newElement.id = infoObj.id;
+    }
     if (infoObj.parent){
         if (typeof parent == 'string'){
             parentElement = document.getElementById(infoObj.parent);
@@ -659,12 +746,15 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
         if (o.width && o.height) element.style.backgroundSize = o.width+' '+o.height;
         if (o.width) element.style.width = o.width;
         if (o.height) element.style.height = o.height;
+        if (o.minWidth) element.style.minWidth = o.minWidth;
+        if (o.minHeight) element.style.minHeight = o.minHeight;
         if (o.class) getEl(element).clas.add(o.class);
         if (o.clazz) getEl(element).clas.add(o.clazz);
         if (o.content) element.innerHTML = o.content;
     }
     element.style.left = element.offsetLeft + 'px';
     element.style.top = element.offsetTop + 'px';
+    this.setTestViewForObj(o, that.globalSetup);
     // DOM에 추가
     if (parentElement)
         getEl(parentElement).add(element);
@@ -821,7 +911,7 @@ BoxMan.prototype.whenMouseDown = function(event){
     return true;
 };
 
-BoxMan.prototype.objStartMove = function(event, selectedObj){    
+BoxMan.prototype.objStartMove = function(event, selectedObj){
     var meta = this.metaObj;
     var mvObj;
     /*sjHelper.cross.stopPropagation(event);*/ //잠시
@@ -1244,6 +1334,8 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
             this.execEventListener(mvObjBeforeBox, 'boxinout', {boxel:boxEl, obj:mvObj, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox});
         if (this.hasEventListener(mvObjBeforeBox, 'boxout'))
             this.execEventListener(mvObjBeforeBox, 'boxout', {boxel:boxEl, obj:mvObj, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox});
+        if (this.hasEventListener(mvObjBeforeBox, 'swappedin') && this.metaObj.mvObjOriginalShelterList.length > 0)
+            this.execEventListener(mvObjBeforeBox, 'swappedin', {boxel:mvObjBeforeBox, obj:this.metaObj.mvObjOriginalShelterList, boxBefore:boxEl});
     }
     if ( flagAfterBoxEvent ){
         var boxCnt = this.getMovableObjCount(boxEl);
@@ -1256,7 +1348,9 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
             this.execEventListener(boxEl, 'boxinout', {boxel:boxEl, obj:mvObj, boxSize:boxCnt, boxBefore:mvObjBeforeBox});
         if (this.hasEventListener(boxEl, 'boxin'))
             this.execEventListener(boxEl, 'boxin', {boxel:boxEl, obj:mvObj, boxSize:boxCnt, boxBefore:mvObjBeforeBox});
-    }    
+        if (this.hasEventListener(boxEl, 'swappedout'))
+            this.execEventListener(boxEl, 'swappedout', {boxel:mvObjBeforeBox, obj:this.metaObj.mvObjOriginalShelterList, boxBefore:boxEl});
+    }
     /* 초기화 */
     mvObj = null;
     return isMoved;
@@ -1881,9 +1975,3 @@ BoxManKeyboarder.prototype = {
 
 
 
-/*************************
- * Exports
- *************************/
-try {
-    module.exports = exports = BoxMan;
-} catch (e) {}

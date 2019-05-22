@@ -1,8 +1,38 @@
-body.boxman-1 div[data-box] {
+/*************************
+BoxMan Test
+*************************/
+
+body div[data-box] {
+  background: #cccccc;
   border: 1px solid black;
 }
 
-body.boxman-1 div[data-obj] {
+body div[data-obj] {
+  background: #aaaaaa;
   border: 1px solid black;
   cursor: pointer;
+}
+
+body.boxman-test-a div[data-box] {
+  background: #cccccc;
+  border: 1px solid black;
+}
+
+body.boxman-test-a div[data-obj] {
+  background: #aaaaaa;
+  border: 1px solid black;
+  cursor: pointer;
+}
+
+body.boxman-test-b div[data-box] {
+  background: #cccccc;
+  border: 1px solid black;
+  width: 100px;
+}
+
+body.boxman-test-b div[data-obj] {
+  background: #aaaaaa;
+  border: 1px solid black;
+  cursor: pointer;
+  width: 30px;
 }
