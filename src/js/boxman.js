@@ -1,5 +1,6 @@
 function BoxMan(setupObj){
     var that = this;
+    var modeMobile = this.isMobile();
     this.event = new SjEvent();
     this.event.setSpecialEventListener(function(element, eventName){
         if (eventName == 'external'){
@@ -34,9 +35,13 @@ function BoxMan(setupObj){
     this.exBoxObjs = {};
     this.cover;
 
-
+    /** Option to user setup **/
     this.globalSetup = {
         modeTest: false,
+        modeMouse: !modeMobile,
+        modeTouch: modeMobile || 'ontouchstart' in document.documentElement,
+        timeForReadyToDragOnMobile: 50,
+
         testBoxClass: null,
         testBoxBorderWidth: '1px',
         testBoxBorderColor: '#f8e',
@@ -52,6 +57,7 @@ function BoxMan(setupObj){
     this.globalSetupForObj = {};
     this.globalSetupForExBox = {};
 
+    /** Meta Data **/
     this.metaObj = {
         mvObj:undefined,
         isOnDown:false,
@@ -83,12 +89,14 @@ function BoxMan(setupObj){
         });
         that.setMaxSize();
         // getEl(document.body).disableSelection();
+        console.error(that.globalSetup.modeTouch, that.globalSetup.modeMouse);
         /** 이벤트의 중원을 맡으실 분들 **/
-        if (that.isMobile()){
+        if (that.globalSetup.modeTouch){
             getEl(document).addEventListener('touchstart', function(event){ that.whenMouseDown(event); });
             getEl(document).addEventListener('touchmove', function(event){ that.whenMouseMove(event); });
             getEl(document).addEventListener('touchend', function(event){ that.whenMouseUp(event); });
-        }else{
+        }
+        if (that.globalSetup.modeMouse){
             getEl(document).addEventListener('mousedown', function(event){ that.whenMouseDown(event); });
             getEl(document).addEventListener('mousemove', function(event){ that.whenMouseMove(event); });
             getEl(document).addEventListener('mouseup', function(event){ that.whenMouseUp(event); });
@@ -725,7 +733,8 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
     }
     // 적용시작
     var that = this;
-    var objs = this.objs;    
+    var objs = this.objs;
+    var meta = this.metaObj;
     // ID 적용
 //    var manid = (infoObj.manid)? infoObj.manid : getEl(objs).getNewSeqId('tmpObj');
     var manid = getEl(objs).getNewSeqId('tmpObj');
@@ -754,14 +763,18 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
     }
     element.style.left = element.offsetLeft + 'px';
     element.style.top = element.offsetTop + 'px';
+    //For Chrome - https://developers.google.com/web/updates/2017/01/scrolling-intervention
+    element.style.touchAction = 'none';
     this.setTestViewForObj(o, that.globalSetup);
+
     // DOM에 추가
     if (parentElement)
         getEl(parentElement).add(element);
     // Event 추가
-    if (this.isMobile()){
+    if (that.globalSetup.modeTouch){
         getEl(element).addEventListener('touchstart', function(event){ that.objStartMove(event, element); });
-    }else{
+    }
+    if (that.globalSetup.modeMouse){
         getEl(element).addEventListener('mousedown', function(event){ that.objStartMove(event, element); });
     }
     getEl(element).addEventListener('click', function(){});
@@ -908,11 +921,15 @@ BoxMan.prototype.shellterToBox = function(toBox){
 BoxMan.prototype.whenMouseDown = function(event){
     var meta = this.metaObj;
     meta.isOnMoving = false;
+    meta.statusTouch = !!(event.touches);
     return true;
 };
 
 BoxMan.prototype.objStartMove = function(event, selectedObj){
     var meta = this.metaObj;
+    if (meta.statusTouch && !event.touches)
+        return true;
+
     var mvObj;
     /*sjHelper.cross.stopPropagation(event);*/ //잠시
 
@@ -943,7 +960,7 @@ BoxMan.prototype.objStartMove = function(event, selectedObj){
     /*** Swap, Overwrite 용 정리 ***/
     meta.mvObjOriginalShelterList = [];
     /*** 이동 전 정보 저장 ***/
-    this.saveInfoBeforeMove(mvObj, event);    
+    this.saveInfoBeforeMove(mvObj, event);
 };
 
 BoxMan.prototype.whenMouseMove = function(event){    
@@ -984,7 +1001,7 @@ BoxMan.prototype.whenMouseUp = function (event){
         this.deleteOriginalClonePreviewer();
         // 결정된 박스에 mvObj넣기
         // if (decidedBox != undefined){
-        this.moveObjTo(mvObj, decidedBox);        
+        this.moveObjTo(mvObj, decidedBox);
         mvObj.style.zIndex = meta.mvObjBeforeIndex;
         if (meta.additionalStartPosLeft != 0 || meta.additionalStartPosTop != 0){            
             mvObj.style.left = (parseInt(mvObj.style.left) - meta.additionalStartPosLeft) +'px';
@@ -995,6 +1012,9 @@ BoxMan.prototype.whenMouseUp = function (event){
         // init
         mvObj = null;
     }
+
+    meta.statusTouch =  false;
+    // window.blockMenuHeaderScroll = false;
     return;
 };
 
@@ -1132,6 +1152,7 @@ BoxMan.prototype.getMovableObj = function(box, event){
 
 
 BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
+    var that = this;
     var meta = this.metaObj;
     meta.mvObjBeforeBox = mvObj.parentNode;
     meta.mvObjBeforeIndex = mvObj.style.zIndex;
@@ -1169,7 +1190,19 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
     if (event.touches != undefined){
         meta.timerObj = event.touches[0].target;
         this.removeTimer();
-        meta.timer = setInterval(setTimer, 100);        
+        meta.timer = setInterval(function(){
+            meta.timerTime += 100; /* 100밀리세컨드 단위로 흐르는 시간 */
+            if (meta.timerTime >= that.globalSetup.timeForReadyToDragOnMobile){
+                event.preventDefault(event);       //MCHROME에서 이게 있어야함. MIE에선 이게 있으면 안됨... 아 모르겠다.
+                // window.blockMenuHeaderScroll = true;
+                getEl(meta.mvObj).clas.add('sj-obj-is-on-moving');
+                meta.isOnDown = true;
+                meta.isOnMoving = false;
+                clearTimeout(meta.timer);
+                meta.timerTime = 0;
+                console.error('check setTimer', meta.isOnDown, meta.isOnMoving);
+            }
+        }, 100);
         /* mvObj.adjust = mouseDown을 시작한 곳과 대상객체의 offset과의 거리 */
         mvObj.adjustX = event.touches[0].pageX - meta.mvObjStartBodyOffset.left;
         mvObj.adjustY = event.touches[0].pageY - meta.mvObjStartBodyOffset.top;        
@@ -1624,10 +1657,11 @@ BoxMan.prototype.overWriteAndSwapPreview = function(goingToBeInThisBox, appendTy
  * 기타 공통 모듈
  *****/
 /* 모바일여부 확인 */
-BoxMan.prototype.isMobile = function(){
+BoxMan.prototype.isMobile = function(force){
+    if (force)
+        return true;
     var mFilter = "win16|win32|win64|mac";
-    var mCheck = false;
-    if(navigator.platform) mCheck = ( mFilter.indexOf(navigator.platform.toLowerCase())<0 ) ? true : false;
+    var mCheck = (navigator.platform && mFilter.indexOf(navigator.platform.toLowerCase()) < 0) ? true : false;
     return mCheck; 
 };
 BoxMan.prototype.setMaxSize = function(event){ 
@@ -1691,23 +1725,6 @@ BoxMan.prototype.isPropManObj = function(element){
     return (element && element.getAttribute && element.getAttribute('data-pop') != null);
 }
 
-BoxMan.prototype.setTimer = function(event){    
-    // var getEl = this.getEl;
-    var that = this;
-    var meta = this.metaObj;    
-    return function(event){
-        /* 100밀리세컨드 단위로 흐르는 시간 */
-        meta.timerTime += 100;
-        if (meta.timerTime >= meta.timeForReadyToDrag){
-            event.preventDefault(event);       //MCHROME에서 이게 있어야함. MIE에선 이게 있으면 안됨... 아 모르겠다.
-            getEl(meta.mvObj).clas.add('sj-obj-is-on-moving');     
-            meta.isOnDown = true;
-            meta.isOnMoving = false;
-            clearTimeout(timer); 
-            meta.timerTime = 0;        
-        }
-    }    
-};
 BoxMan.prototype.removeTimer = function(){
     var meta = this.metaObj;
     /* 객체 길게 누름 관련 */
