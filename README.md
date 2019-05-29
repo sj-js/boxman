@@ -7,7 +7,7 @@
 
 # BoxMan
 
-(Detail: https://sj-js.github.io/boxman/READEME.html)
+(Detail: https://sj-js.github.io/dist/boxman/READEME.html)
 
 
 

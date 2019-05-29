@@ -20,7 +20,7 @@ modeRemoveOutOfBox | false | Box 밖으로 이동할 시에는 Obj 노드는 삭
     
     *@* *+prefix* *x* *@* 
     ```html
-    <link rel="stylesheet" href="/boxman/boxman.css">
+    <link rel="stylesheet" href="../boxman/boxman.css">
     <script src="../crossman/crossman.js"></script>
     <script src="../boxman/boxman.js"></script>
     <script>

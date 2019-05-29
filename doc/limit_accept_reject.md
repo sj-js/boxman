@@ -21,7 +21,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     
     *@* *+prefix* *x* *@* 
     ```html
-    <link rel="stylesheet" href="/boxman/boxman.css">
+    <link rel="stylesheet" href="../boxman/boxman.css">
     <script src="../crossman/crossman.js"></script>
     <script src="../boxman/boxman.js"></script>
     <script>

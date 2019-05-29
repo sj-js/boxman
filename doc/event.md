@@ -26,7 +26,7 @@ swappedout | swap이 발생할때
     
     *@* *+prefix* *x* *@* 
     ```html
-    <link rel="stylesheet" href="/boxman/boxman.css">
+    <link rel="stylesheet" href="../boxman/boxman.css">
     <script src="../crossman/crossman.js"></script>
     <script src="../boxman/boxman.js"></script>
     <script>
