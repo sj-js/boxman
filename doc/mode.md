@@ -92,12 +92,30 @@ modeRemoveOutOfBox | false | Box 밖으로 이동할 시에는 Obj 노드는 삭
         <div data-box id="box">BOX A</div>
         <div data-box>BOX B</div>
         <div data-box>
-            BOX B
+            BOX C
             <div data-obj>OBJ A</div>
         </div>
     </body>
     ```
 
+    *@* *!* *@*
+    ```html
+    <script>
+        boxman.setup({modeOnlyBoxToBox: false, defaultBox: document.body, modeDefaultAbsolute:true}).detect();     
+    </script>
+    
+    <body>
+        <div data-box id="box">BOX A</div>
+        <div data-box>BOX B</div>
+        <div data-box>
+            BOX C
+            <div data-obj>OBJ A</div>
+        </div>
+    </body>
+    ```
+    
+    - `defaultBox`: modeOnlyBoxToBox가 false일 때, 이 옵션값에 따라 원하는 Element로 설정할 수 있다. (Default: `document.body`)
+    - `modeDefaultAbsolute`: Style속성인 position의 값을 absolute로 할 것인지를 설정한다.  (Default: `true`)
 
 ## modeRemoveOutOfBox
 - OBJ를 박스 밖으로 보내면 삭제됩니다.

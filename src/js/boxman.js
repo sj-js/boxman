@@ -50,9 +50,10 @@ function BoxMan(setupObj){
         testObjBorderColor: '#7effb4',
 
         defaultBox: undefined,
+        modeDefaultAbsolute: true,
 
         modeCopy: false,
-        modeOnlyBoxToBox: false,
+        modeOnlyBoxToBox: true,
         modeRemoveOutOfBox: false,
         appendType: BoxMan.APPEND_TYPE_LAST
     };
@@ -82,7 +83,7 @@ function BoxMan(setupObj){
             h:window.innerHeight
         },
         limit:2,
-        layerOnMove:document.body,
+        layerOnMove:undefined,  //TODO: defaultBox로 바꿀지 다른 목적으로 할지..
         mode:new BoxManMode(this.globalSetup)
     };
     if (setupObj)
@@ -993,27 +994,26 @@ BoxMan.prototype.whenMouseUp = function (event){
     this.removeTimer();
     /* 이동객체 상태 취소 */
     if (meta.isOnDown){
-        getEl(mvObj).clas.remove('sj-obj-is-on-moving');
+        getEl(mvObj).removeClass('sj-obj-is-on-moving');
         meta.isOnDown = false;
     }
     /*** 아래는 이동중이던 객체에게 적용 ***/
     if (meta.isOnMoving){
         // mvObj가 이동할 박스객체 하나 선정
         var decidedBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);
-        decidedBox = (decidedBox) ? decidedBox : meta.layerOnMove;
+        decidedBox = (decidedBox) ? decidedBox : (this.globalSetup.defaultBox) ? this.globalSetup.defaultBox : document.body;
         /*** 객체 갈 곳 미리보기 지우기 ***/
         this.deletePreviewer();
         this.deleteOriginalClonePreviewer();
         // 결정된 박스에 mvObj넣기
-        // if (decidedBox != undefined){
         this.moveObjTo(mvObj, decidedBox);
         mvObj.style.zIndex = meta.mvObjBeforeIndex;
-        if (meta.additionalStartPosLeft != 0 || meta.additionalStartPosTop != 0){            
-            mvObj.style.left = (parseInt(mvObj.style.left) - meta.additionalStartPosLeft) +'px';
-            mvObj.style.top = (parseInt(mvObj.style.top) - meta.additionalStartPosTop) +'px';
-        }
-        // }        
-        // confirm mvObj is out of the Box
+
+        // if (meta.additionalStartPosLeft != 0 || meta.additionalStartPosTop != 0){
+        //     mvObj.style.left = (parseInt(mvObj.style.left) - meta.additionalStartPosLeft) +'px';
+        //     mvObj.style.top = (parseInt(mvObj.style.top) - meta.additionalStartPosTop) +'px';
+        // }
+
         // init
         mvObj = null;
     }
@@ -1200,7 +1200,7 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
             if (meta.timerTime >= that.globalSetup.timeForReadyToDragOnMobile){
                 event.preventDefault(event);       //MCHROME에서 이게 있어야함. MIE에선 이게 있으면 안됨... 아 모르겠다.
                 // window.blockMenuHeaderScroll = true;
-                getEl(meta.mvObj).clas.add('sj-obj-is-on-moving');
+                getEl(meta.mvObj).addClass('sj-obj-is-on-moving');
                 meta.isOnDown = true;
                 meta.isOnMoving = false;
                 clearTimeout(meta.timer);
@@ -1219,7 +1219,7 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
         mvObj.adjustX = event.clientX - meta.mvObjStartBodyOffset.left;
         mvObj.adjustY = event.clientY - meta.mvObjStartBodyOffset.top;
         /* mvObj의 이동을 허가하는  표시와 설정 */
-        getEl(mvObj).clas.add('sj-obj-is-on-moving');
+        getEl(mvObj).addClass('sj-obj-is-on-moving');
         meta.isOnDown = true;
         meta.isOnMoving = false;        
     }       
@@ -1321,14 +1321,26 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
     // 다시 같은 상자면 원위치, 이동을 허가하지 않은 상자면 원위치
     if ( isRollback || isRollbackWithEvent || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
         if (!isToBox){
-            if (isRemoveOutOfBox){
+            if (isRemoveOutOfBox){ //TODO: modeRemoveOutOfBox = true일 때
                 this.delObj(mvObj);
                 return;
-            }else{
+
+            }else if (!modeOnlyBoxToBox){ //TODO: 임시로 여기서 ==> modeOnlyBoxToBox = false일 때
                 console.error('Go to Out ??22');
+                //Move Moment
+                this.goTo(mvObj, boxEl, appendType, mvObjPreviewClone);
+                if (mode.get('modeDefaultAbsolute')){
+                    mvObj.style.position = 'absolute';
+                }
+                flagBeforeBoxEvent = true;
+                flagAfterBoxEvent = true;
+                isMoved = true;
+            }else{
+                this.backToBefore(mvObj, mvObjBeforeBox, appendType);
             }
+        }else{
+            this.backToBefore(mvObj, mvObjBeforeBox, appendType);
         }
-        this.backToBefore(mvObj, mvObjBeforeBox, appendType);
 
     // 이동전 수행 펑션 true면 통과
     }else{ 
@@ -1480,7 +1492,7 @@ BoxMan.prototype.createPreviewer = function(mvObj){
 	var mvObjPreviewClone = mvObj.cloneNode(true);
     mvObjPreviewClone.setAttribute('data-obj', 'false'); //undefined, null, true, false를 지정하면 조건식에서 정상적으로 작동을 안함. 스트링으로
     mvObjPreviewClone.setAttribute('data-obj-previewer', 'true'); 
-    getEl(mvObjPreviewClone).clas.add('sj-preview-going-to-be-in-box');
+    getEl(mvObjPreviewClone).addClass('sj-preview-going-to-be-in-box');
     mvObjPreviewClone.style.position = "";
     return mvObjPreviewClone;
 };
@@ -1492,8 +1504,8 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     var previewOriginalClone = meta.mvObjPreviewOriginalClone;
     var mvObjBeforeBox = meta.mvObjBeforeBox;    
     /** 가는 위치 미리 보여주기 **/
-    var goingToBeInThisBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);    
-    var boxEl = goingToBeInThisBox;
+    var goingToBeInThisBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);
+    var boxEl = (goingToBeInThisBox) ? goingToBeInThisBox : (this.globalSetup.defaultBox) ? this.globalSetup.defaultBox : document.body;
     var bfBoxInfo = this.getBox(mvObjBeforeBox);
     var afBoxInfo = this.getBox(boxEl);
     var objInfo = this.getObj(mvObj);
@@ -1528,17 +1540,31 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     var isAcceptedObj = ( !isToBox || getEl(objInfo).isAccepted(afBoxInfo.acceptobj, afBoxInfo.rejectobj) );
 
     // 갈 곳 미리보기 효과 (클론 효과)
-    // 원위치로 지정
+    /** 원위치로 지정 **/
     if (isRollback || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
         console.log(isRollback, isNotOnlyToBox, 'ACCPETBOX:'+isAcceptedBox, 'ACCPETOBJ:'+isAcceptedObj, 'TOBOX:'+isToBox, 'FROMBOX:'+isFromBox, modeRemoveOutOfBox, isSameBox, isToBox);
-        if (modeRemoveOutOfBox && !isSameBox && !isToBox){
-            if (mvObjPreviewClone.parentNode)
-                mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
-            this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
-            this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
-            meta.lastGoingToBeInThisBox = goingToBeInThisBox;
-            console.log('Back!!! Remove OBJECT Out Of Box');
-            return;
+        if (!isToBox){
+            if (!isSameBox){
+                if (modeRemoveOutOfBox){ //TODO: modeRemoveOutOfBox = true일 때
+                    if (mvObjPreviewClone.parentNode)
+                        mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+                    this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
+                    this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
+                    meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+                    console.log('Back!!! Remove OBJECT Out Of Box');
+                    return;
+                }
+                if (!modeOnlyBoxToBox){ //TODO: 임시로 여기서 ==> modeOnlyBoxToBox = false일 때
+                    console.log('Out Of Box', mode.get('modeDefaultAbsolute'), mvObjPreviewClone.style.position, mvObjPreviewClone.style.left, mvObjPreviewClone.style.top);
+                    if (mode.get('modeDefaultAbsolute')){
+                        this.deletePreviewer()
+                    }else{
+                        this.goTo(mvObjPreviewClone, boxEl, appendType, mvObjPreviewClone, mvObjPreviewClone.style.position);
+                    }
+                    meta.lastGoingToBeInThisBox = boxEl;
+                    return;
+                }
+            }
         }
         //
         if (!isAcceptedBox || !isAcceptedObj){
@@ -1555,41 +1581,41 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
         meta.lastGoingToBeInThisBox = goingToBeInThisBox;
         this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
         console.log('Back!!!');
+        return;
+    }
 
-    }else{
-        // 갈 예정인 박스안 지정
-        if (boxEl){
-            console.log('Box In ');
-            //Back Up Moment
-            if (isRollback2){
-                this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
-                meta.lastGoingToBeInThisBox = goingToBeInThisBox;
-                return;
-            }
-            var mvTarget;
-            //Before Move Moment
-            if (appendType == BoxMan.APPEND_TYPE_OVERWRITE && !isSameBox){
-                this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
-                if (modeCopy && mvObjPreviewClone.parentNode)
-                    mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
-                this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
-            }else if (appendType == BoxMan.APPEND_TYPE_SWAP && !isSameBox && canEnter){
-                this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
-                this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
-            }else{
-                this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
-            }
-            //Move Moment
-            this.goTo(mvObjPreviewClone, goingToBeInThisBox, appendType, mvObjPreviewClone);
-        // 박스 밖으로 갈 예정
-        }else{
-            console.log('Out Of Box ');
-            if (lastGoingToBeInThisBox)
-                getEl(lastGoingToBeInThisBox).clas.remove('sj-tree-box-to-go');
-            if (mvObjPreviewClone.parentNode)
+    /** 갈 예정인 박스안 지정 **/
+    if (boxEl){
+        console.log('Box In ');
+        //Back Up Moment
+        if (isRollback2){
+            this.backToBefore(mvObjPreviewClone, mvObjBeforeBox, appendType, modeCopy);
+            meta.lastGoingToBeInThisBox = goingToBeInThisBox;
+            return;
+        }
+        var mvTarget;
+        //Before Move Moment
+        if (appendType == BoxMan.APPEND_TYPE_OVERWRITE && !isSameBox){
+            this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
+            if (modeCopy && mvObjPreviewClone.parentNode)
                 mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
             this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
+        }else if (appendType == BoxMan.APPEND_TYPE_SWAP && !isSameBox && canEnter){
+            this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
+            this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
+        }else{
+            this.originalCopyBackToBefore(previewOriginalClone, mvObjBeforeBox, appendType, modeCopy);
         }
+        //Move Moment
+        this.goTo(mvObjPreviewClone, goingToBeInThisBox, appendType, mvObjPreviewClone);
+        // 박스 밖으로 갈 예정
+    }else{
+        console.log('Out Of Box ');
+        if (lastGoingToBeInThisBox)
+            getEl(lastGoingToBeInThisBox).removeClass('sj-tree-box-to-go');
+        if (mvObjPreviewClone.parentNode)
+            mvObjPreviewClone.parentNode.removeChild(mvObjPreviewClone);
+        this.overWriteAndSwapPreview(goingToBeInThisBox, appendType);
     }
     meta.lastGoingToBeInThisBox = goingToBeInThisBox;
     
