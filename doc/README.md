@@ -73,6 +73,12 @@
         boxman.newBox({content:'BOX A', width:'200px', minHeight:'30px'});
         boxman.newBox({content:'BOX B', width:'200px', minHeight:'30px'});
         boxman.newObj({content:'OBJ A', width:'50px', height:'30px'});
+        boxman.newObj({content:'OBJ B', width:'50px', height:'30px'});
+        boxman.newObj({content:'OBJ C', width:'50px', height:'30px'});
+        boxman.newObj({content:'OBJ D', width:'50px', height:'30px'});
+        boxman.newObj({content:'OBJ E', width:'50px', height:'30px'});
+        boxman.newObj({content:'OBJ F', width:'50px', height:'30px'});
+        boxman.newObj({content:'OBJ G', width:'50px', height:'30px'});
     </script>
     ```
 

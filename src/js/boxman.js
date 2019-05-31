@@ -10,7 +10,7 @@ function BoxMan(setupObj){
             getEl(element).addEventListener('dragover', that.handleDragOver(that, element));
             getEl(element).addEventListener('dragleave', that.handleDragOut(that, element));
             getEl(element).addEventListener('drop', that.handleDrop(that, element));
-            var rect = getEl(element).getBoundingClientRect();
+            var rect = getEl(element).getBoundingOffsetRect();
             //Make Cover
             var cover = newEl('div');
             cover.style.width = rect.width;
@@ -48,8 +48,11 @@ function BoxMan(setupObj){
         testObjClass: null,
         testObjBorderWidth: '1px',
         testObjBorderColor: '#7effb4',
+
+        defaultBox: undefined,
+
         modeCopy: false,
-        modeOnlyBoxToBox: true,
+        modeOnlyBoxToBox: false,
         modeRemoveOutOfBox: false,
         appendType: BoxMan.APPEND_TYPE_LAST
     };
@@ -72,12 +75,14 @@ function BoxMan(setupObj){
         mvObjAppendTypeBefore:undefined,
         mvObjOriginalBox:undefined,
         mvObjOriginalShelterList:[],
+
+        testDivForCheckSize: null,
         cam:{
             w:window.innerWidth,
             h:window.innerHeight
         },
         limit:2,
-        layerOnMove:undefined,
+        layerOnMove:document.body,
         mode:new BoxManMode(this.globalSetup)
     };
     if (setupObj)
@@ -85,9 +90,9 @@ function BoxMan(setupObj){
 
     getEl().ready(function(){
         getEl().resize(function(){
-            that.setMaxSize();
+            that.resize();
         });
-        that.setMaxSize();
+        that.resize();
         // getEl(document.body).disableSelection();
         console.error(that.globalSetup.modeTouch, that.globalSetup.modeMouse);
         /** 이벤트의 중원을 맡으실 분들 **/
@@ -1158,7 +1163,7 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
     meta.mvObjBeforeIndex = mvObj.style.zIndex;
     meta.mvObjBeforePosition = mvObj.style.position;    
     meta.mvObjBeforeNextSibling = mvObj.nextSibling;
-    meta.mvObjStartBodyOffset = getEl(mvObj).getBoundingClientRect(); // body관점에서 대상객체의 offset    
+    meta.mvObjStartBodyOffset = getEl(mvObj).getBoundingOffsetRect(); // body관점에서 대상객체의 offset
     mvObj.style.zIndex = getData().findHighestZIndex(['div']) + 1; // 이동객체에 가장 높은 zIndex 설정
     meta.lastGoingToBeInThisBox = meta.mvObjBeforeBox;
 
@@ -1175,7 +1180,7 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
 
     if (mvObj.parentNode != document.body){                
         var o = this.findAbsoluteParentEl(mvObj);
-        var offset = getEl(o).getBoundingClientRect();
+        var offset = getEl(o).getBoundingOffsetRect();
         meta.additionalStartPosLeft = offset.left;
         meta.additionalStartPosTop = offset.top;
         console.debug(offset.left, offset.top);
@@ -1209,8 +1214,10 @@ BoxMan.prototype.saveInfoBeforeMove = function(mvObj, event){
     /* Web Control */
     }else{        
         /* mvObj.adjust = mouseDown을 시작한 곳과 대상객체의 offset과의 거리 */
-        mvObj.adjustX = event.clientX - meta.mvObjStartBodyOffset.left + getEl().getBodyScrollX();
-        mvObj.adjustY = event.clientY - meta.mvObjStartBodyOffset.top + getEl().getBodyScrollY();        
+        // mvObj.adjustX = event.clientX - meta.mvObjStartBodyOffset.left + getEl().getBodyScrollX();
+        // mvObj.adjustY = event.clientY - meta.mvObjStartBodyOffset.top + getEl().getBodyScrollY();
+        mvObj.adjustX = event.clientX - meta.mvObjStartBodyOffset.left;
+        mvObj.adjustY = event.clientY - meta.mvObjStartBodyOffset.top;
         /* mvObj의 이동을 허가하는  표시와 설정 */
         getEl(mvObj).clas.add('sj-obj-is-on-moving');
         meta.isOnDown = true;
@@ -1223,26 +1230,27 @@ BoxMan.prototype.setMovingState = function(mvObj){
     var meta = this.metaObj;   
     var lastPosX = meta.lastPosX;
     var lastPosY = meta.lastPosY;
+    this.resize();
     var cam = meta.cam;
     var dan = 'px';
-    /* X축 이동하기*/
-    if (lastPosX - mvObj.adjustX >= 1
-    && lastPosX - mvObj.adjustX + mvObj.offsetWidth <= cam.w) {
+    /** X축 이동하기 **/
+    if (lastPosX - mvObj.adjustX >= 1 && lastPosX - mvObj.adjustX + mvObj.offsetWidth <= cam.w){
         mvObj.style.left = (lastPosX - mvObj.adjustX) + dan;
     }else{
         /* X축 이동 제한*/
-        if(lastPosX - mvObj.adjustX < 1) mvObj.style.left = 0 + dan;
-        if(lastPosX - mvObj.adjustX + mvObj.offsetWidth > cam.w)
+        if (lastPosX - mvObj.adjustX < 1)
+            mvObj.style.left = 0 + dan;
+        if (lastPosX - mvObj.adjustX + mvObj.offsetWidth > cam.w)
             mvObj.style.left = (cam.w - mvObj.offsetWidth) + dan;
     }
-    /* Y축 이동하기 */
-    if (lastPosY - mvObj.adjustY >= 1
-    && lastPosY - mvObj.adjustY + mvObj.offsetHeight <= cam.h){
+    /** Y축 이동하기 **/
+    if (lastPosY - mvObj.adjustY >= 1 && lastPosY - mvObj.adjustY + mvObj.offsetHeight <= cam.h){
         mvObj.style.top = (lastPosY - mvObj.adjustY) + dan;
     }else{
         /* Y축 이동 제한 */
-        if(lastPosY - mvObj.adjustY < 1) mvObj.style.top = 0 + dan;
-        if(lastPosY - mvObj.adjustY + mvObj.offsetHeight > cam.h){
+        if (lastPosY - mvObj.adjustY < 1)
+            mvObj.style.top = 0 + dan;
+        if (lastPosY - mvObj.adjustY + mvObj.offsetHeight > cam.h){
             mvObj.style.top = (cam.h - mvObj.offsetHeight) + dan;
         }
     }
@@ -1250,14 +1258,16 @@ BoxMan.prototype.setMovingState = function(mvObj){
     /** mvObj 이동중인 상태를 적용 **/
     mvObj.style.position = 'absolute';
     mvObj.style.float = '';
-    getEl(mvObj).clas.add('sj-obj-is-on-moving');
+    getEl(mvObj).addClass('sj-obj-is-on-moving');
     // getEl(meta.mvObjBeforeBox).add(mvObj);
     getEl(document.body).add(mvObj);
     
     /* 이동시 크기변이 또는 해당Layout의 scroll계산의 까다로움으로 인하여 mvObj의 영역에 마우스가 위치하지 않는 경우 마우스를 0점 위치로 */
     if (!meta.isOnMoving) {        
-        if (mvObj.adjustX > mvObj.offsetWidth || mvObj.adjustX < 0) mvObj.adjustX = mvObj.offsetWidth;
-        if (mvObj.adjustY > mvObj.offsetHeight || mvObj.adjustY < 0) mvObj.adjustY = mvObj.offsetHeight;
+        if (mvObj.adjustX > mvObj.offsetWidth || mvObj.adjustX < 0)
+            mvObj.adjustX = mvObj.offsetWidth;
+        if (mvObj.adjustY > mvObj.offsetHeight || mvObj.adjustY < 0)
+            mvObj.adjustY = mvObj.offsetHeight;
     }
 
     /* 이동중 확정 */
@@ -1310,9 +1320,13 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
 
     // 다시 같은 상자면 원위치, 이동을 허가하지 않은 상자면 원위치
     if ( isRollback || isRollbackWithEvent || isNotOnlyToBox || !isAcceptedBox || !isAcceptedObj){
-        if (isRemoveOutOfBox && !isToBox){
-            this.delObj(mvObj);
-            return;
+        if (!isToBox){
+            if (isRemoveOutOfBox){
+                this.delObj(mvObj);
+                return;
+            }else{
+                console.error('Go to Out ??22');
+            }
         }
         this.backToBefore(mvObj, mvObjBeforeBox, appendType);
 
@@ -1349,6 +1363,7 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
             isMoved = true;
         // 허공에서 허공으로 이동
         }else{
+            console.error('Go to Out ??');
             meta.mvObjBeforeBox.appendChild(mvObj);
             
         }
@@ -1426,7 +1441,7 @@ BoxMan.prototype.backToBefore = function(mvObj, boxEl, appendType, modeCopy){
     var mvObjBeforePosition = meta.mvObjBeforePosition;
     var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;    
     boxEl.insertBefore(mvObj, mvObjBeforeNextSibling);    
-    mvObj.style.position = (mvObjBeforePosition=='absolute') ? 'absolute':'';
+    mvObj.style.position = (mvObjBeforePosition == 'absolute') ? 'absolute':'';
     if (mvObjBeforePosition == 'absolute'){
         mvObj.style.left = mvObjStartBodyOffset.x +'px';
         mvObj.style.top = mvObjStartBodyOffset.y +'px';
@@ -1443,7 +1458,7 @@ BoxMan.prototype.originalCopyBackToBefore = function(mvObj, boxEl, appendType, m
             var mvObjBeforePosition = meta.mvObjBeforePosition;
             var mvObjStartBodyOffset = meta.mvObjStartBodyOffset;
             boxEl.insertBefore(mvObj, mvObjBeforeNextSibling);
-            mvObj.style.position = (mvObjBeforePosition=='absolute') ? 'absolute':'';
+            mvObj.style.position = (mvObjBeforePosition == 'absolute') ? 'absolute' : '';
             if (mvObjBeforePosition == 'absolute'){
                 mvObj.style.left = mvObjStartBodyOffset.x +'px';
                 mvObj.style.top = mvObjStartBodyOffset.y +'px';
@@ -1664,29 +1679,34 @@ BoxMan.prototype.isMobile = function(force){
     var mCheck = (navigator.platform && mFilter.indexOf(navigator.platform.toLowerCase()) < 0) ? true : false;
     return mCheck; 
 };
-BoxMan.prototype.setMaxSize = function(event){ 
-    // var getEl = this.getEl;
+BoxMan.prototype.resize = function(event){
     var meta = this.metaObj;
-    var testDiv = document.createElement('div');
-    testDiv.style.display = 'block';
-    testDiv.style.position = 'absolute'; 
-    testDiv.style.top = '-7777px'; 
-    testDiv.style.left = '-7777px'; 
-    testDiv.style.width = '100%'; 
-    testDiv.style.height = '100%';    
-    testDiv.style.border = '0px solid'; 
-    testDiv.style.padding = '0px'; 
-    testDiv.style.margin = '0px';  
-    getEl(document.body).add(testDiv);
-    var w = testDiv.offsetWidth;
-    var h = testDiv.offsetHeight;
-    console.debug('MAX:'+ meta.cam.w +'/'+ meta.cam.h);
-    console.debug('=> '+ w +'/'+ h);
-    // if (!meta.cam.w){
-        meta.cam.w = w;
-        meta.cam.h = h;
-    // }
-    console.log(meta.cam);
+    if (!meta.testDivForCheckSize){
+        meta.testDivForCheckSize = document.createElement('div');
+        var testDiv = meta.testDivForCheckSize;
+        testDiv.style.display = 'block';
+        testDiv.style.position = 'absolute';
+        testDiv.style.top = '-7777px';
+        testDiv.style.left = '-7777px';
+        testDiv.style.width = '100%';
+        testDiv.style.height = '100%';
+        testDiv.style.border = '0px solid';
+        testDiv.style.padding = '0px';
+        testDiv.style.margin = '0px';
+        getEl(document.body).add(testDiv);
+    }
+
+    var test = meta.testDivForCheckSize;
+    var body = document.body
+    var html = document.documentElement;
+    var width = Math.max( body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth, test.offsetWidth );
+    var height = Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight, test.offsetHeight );
+
+    var beforeWidth = meta.cam.w;
+    var beforeHeight = meta.cam.h;
+    meta.cam.w = width;
+    meta.cam.h = height;
+    // console.log('RESIZE>>  MAX:'+ beforeWidth +'/'+ beforeHeight +'   ==> '+ meta.cam.w +'/'+ meta.cam.h);
 };
 BoxMan.prototype.setLastPos = function(event){ 
     var meta = this.metaObj;
@@ -1706,17 +1726,15 @@ BoxMan.prototype.setLastPos = function(event){
 /* X,Y가 영역 안에 존재하는지 확인
  * 의존 : getBoundingClientRect()  */
 BoxMan.prototype.isInBox = function (target, objX, objY){
-    var targetBodyOffset = getEl(target).getBoundingClientRect();
+    // var targetBodyOffset = getEl(target).getBoundingClientRect();
+    var targetBodyOffset = getEl(target).getBoundingOffsetRect();
     var targetBodyOffsetX = targetBodyOffset.left;
     var targetBodyOffsetY = targetBodyOffset.top;
-    // console.debug(target, objY,  target.offsetHeight, targetBodyOffset.top, target.scrollTop);
+
     /* 상자 안인지 판정 */
-    if(targetBodyOffsetX + target.scrollLeft< objX
-    && targetBodyOffsetX + target.offsetWidth + target.scrollLeft> objX
-    && targetBodyOffsetY + target.scrollTop< objY +target.scrollTop
-    && targetBodyOffsetY + target.offsetHeight + target.scrollTop > objY +target.scrollTop){
-        // console.debug(target, target.scrollTop +'<'+ objY +'<'+ (target.offsetHeight + target.scrollTop) );
-        return true;        
+    if (targetBodyOffsetX < objX && targetBodyOffsetX + target.offsetWidth > objX
+    && targetBodyOffsetY < objY && targetBodyOffsetY + target.offsetHeight > objY){
+        return true;
     }
     return false;       
 };
