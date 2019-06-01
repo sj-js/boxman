@@ -89,12 +89,27 @@ function BoxMan(setupObj){
     if (setupObj)
         this.setup(setupObj);
 
-    getEl().ready(function(){
-        getEl().resize(function(){
-            that.resize();
-        });
-        that.resize();
-        // getEl(document.body).disableSelection();
+    // getEl().ready(function(){
+    //     // getEl().resize(function(){
+    //     //     that.resize();
+    //     // });
+    //     // that.resize();
+    //     // getEl(document.body).disableSelection();
+    //     console.error(that.globalSetup.modeTouch, that.globalSetup.modeMouse);
+    //     /** 이벤트의 중원을 맡으실 분들 **/
+    //     if (that.globalSetup.modeTouch){
+    //         getEl(document).addEventListener('touchstart', function(event){ that.whenMouseDown(event); });
+    //         getEl(document).addEventListener('touchmove', function(event){ that.whenMouseMove(event); });
+    //         getEl(document).addEventListener('touchend', function(event){ that.whenMouseUp(event); });
+    //     }
+    //     if (that.globalSetup.modeMouse){
+    //         getEl(document).addEventListener('mousedown', function(event){ that.whenMouseDown(event); });
+    //         getEl(document).addEventListener('mousemove', function(event){ that.whenMouseMove(event); });
+    //         getEl(document).addEventListener('mouseup', function(event){ that.whenMouseUp(event); });
+    //     }
+    // });
+
+    document.addEventListener("DOMContentLoaded", function(){
         console.error(that.globalSetup.modeTouch, that.globalSetup.modeMouse);
         /** 이벤트의 중원을 맡으실 분들 **/
         if (that.globalSetup.modeTouch){
@@ -107,7 +122,13 @@ function BoxMan(setupObj){
             getEl(document).addEventListener('mousemove', function(event){ that.whenMouseMove(event); });
             getEl(document).addEventListener('mouseup', function(event){ that.whenMouseUp(event); });
         }
+        that.resize();
+    }, false);
+
+    window.addEventListener('resize', function(){
+        that.resize();
     });
+
     return this;
 }
 
@@ -672,7 +693,7 @@ BoxMan.prototype.addConditionWithObj = function(targetBoxCondition, conditionFor
     for (var i=0; i<targetBoxList.length; i++){
         var targetBox = targetBoxList[i];
         targetBox.conditionobj.push({
-            condition:conditionForBox,
+            condition:conditionForObj,
             data:data
         });
     }
@@ -1732,7 +1753,7 @@ BoxMan.prototype.resize = function(event){
     var beforeHeight = meta.cam.h;
     meta.cam.w = width;
     meta.cam.h = height;
-    // console.log('RESIZE>>  MAX:'+ beforeWidth +'/'+ beforeHeight +'   ==> '+ meta.cam.w +'/'+ meta.cam.h);
+    console.log('[BOXMAN] RESIZE>>  MAX:'+ beforeWidth +'/'+ beforeHeight +'   ==> '+ meta.cam.w +'/'+ meta.cam.h);
 };
 BoxMan.prototype.setLastPos = function(event){ 
     var meta = this.metaObj;
