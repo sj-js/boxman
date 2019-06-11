@@ -110,7 +110,6 @@ function BoxMan(setupObj){
     // });
 
     document.addEventListener("DOMContentLoaded", function(){
-        console.error(that.globalSetup.modeTouch, that.globalSetup.modeMouse);
         /** 이벤트의 중원을 맡으실 분들 **/
         if (that.globalSetup.modeTouch){
             getEl(document).addEventListener('touchstart', function(event){ that.whenMouseDown(event); });
@@ -385,7 +384,7 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
     }
     //MAN ID 적용
     var manid = (infoObj.manid) ? infoObj.manid : getEl(boxObjs).getNewSeqId('tmpBox'); //TODO: manid에 대한 재정의 필요
-    var id = (infoObj.id) ? infoObj.id : element.id;
+    var id = (infoObj.id) ? infoObj.id : (element.id) ? element.id : manid;
     element.manid = manid;
     element.id = id;
     //컬렉션에 저장
@@ -763,9 +762,11 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
     var objs = this.objs;
     var meta = this.metaObj;
     // ID 적용
-//    var manid = (infoObj.manid)? infoObj.manid : getEl(objs).getNewSeqId('tmpObj');
-    var manid = getEl(objs).getNewSeqId('tmpObj');
+    var manid = (infoObj.manid)? infoObj.manid : getEl(objs).getNewSeqId('tmpObj');
+    // var manid = getEl(objs).getNewSeqId('tmpObj');
+    var id = (infoObj.id) ? infoObj.id : (element.id) ? element.id : manid;
     element.manid = manid;
+    element.id = id;
     this.objs[manid] = infoObj;
     this.objs[manid].element = element;
     this.objs[manid].id = element.id;
