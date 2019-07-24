@@ -15,9 +15,9 @@
 
 1. Script
     ```html
-    <link rel="stylesheet" href="https://rawgit.com/sj-js/boxman/master/dist/css/boxman.css">
-    <script src="https://rawgit.com/sj-js/crossman/master/dist/js/crossman.js"></script>
-    <script src="https://rawgit.com/sj-js/boxman/master/dist/js/boxman.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/gh/sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/js/boxman.js"></script>
     <script>
          var boxman = new BoxMan();
     </script>
