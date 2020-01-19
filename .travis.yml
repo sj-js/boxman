@@ -15,11 +15,17 @@ before_deploy:
   - ls dist/js/
   
 deploy:
-  provider: releases
-  api_key:
-    secure: "b8olWRbENiKKWDcuyR+5RbC7NQ8PHW8Ytf5tvgzQJOvs47G0W8En7eeLVDaebX4EiKxbgc7q9pTdy67XKKgo6q1swaC1Pvwy736fYFGER7SLDCMo6h0eyq1ch9mdjmq7IfcvO2opUwdov86jpJ0gAxmCl59FwrOpd2Ycf/rP+Qdx1VoLOvxBP/SJeBxiYanhAVTxNrSo1N6sG7WPHJbbieaE2g6TQ0onEltHDLm97QVQXIf8zDLAbRcg3jbt6+yUCC16NB4sncQEXwBvOgMvUL+q7Wx3lxLIZO1KP4S02T2+C1l8+42sKwd8WBIAvScqkKrdyIA+bgmcnpbQDO87Cey7a4J3nNY71njUHTK5SilNtAOusx0W3VbvyIbV07e5N/Ilc6k0cPG3ZE4OB4nHd+MgNJLR/FtkTqkHdRJWaZwYUJ5pTFElDJlrJeIzoGVufN+6dLeHBIygwAJF9TNE4N3mGYE/yqCHoFO2suSP6IuuVuBak7+7jexk7k8pjURcrXdGHGH8LjiOBWHAez5cuFnauQn8zJ3JDRsK0bnPZymQ14P66DM94bFPteMg6YVhsojrVAHCCHMhxeaw33+sqNBQZRe5UXBrqgGOJUXjy+wM3zGffdzId4jeQMNDqZ55bXqlsIBSLNtOKMlAJI3MkJ+VDm09NHICHA81OFHGjFc="
-  file: dist/js/boxman.min.js
-  skip_cleanup: true
-  on:
-    repo: sj-js/boxman
-    branch: master
+  - provider: releases
+    api_key:
+      secure: "$GITHUB_API_KEY"
+    file: dist/js/boxman.min.js
+    skip_cleanup: true
+    on:
+      repo: sj-js/boxman
+      branch: master
+  - provider: npm
+    email: "$NPM_EMAIL"
+    api_key: "$NPM_API_TOKEN"
+    skip_cleanup: true
+    on:
+      branch: master
