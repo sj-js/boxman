@@ -1,16 +1,17 @@
 # BoxMan
-- BoxMan을 사용하면 HTML DOM객체를 자유롭게 이동시키거나 특정 영역(Box)에 옮길 수 있습니다.
+## 📦
+[![Build Status](https://travis-ci.org/sj-js/boxman.svg?branch=master)](https://travis-ci.org/sj-js/boxman)
+[![All Download](https://img.shields.io/github/downloads/sj-js/boxman/total.svg)](https://github.com/sj-js/boxman/releases)
+[![Release](https://img.shields.io/github/release/sj-js/boxman.svg)](https://github.com/sj-js/boxman/releases)
+[![License](https://img.shields.io/github/license/sj-js/boxman.svg)](https://github.com/sj-js/boxman/releases)
 
-    [![Build Status](https://travis-ci.org/sj-js/boxman.svg?branch=master)](https://travis-ci.org/sj-js/boxman)
-    [![All Download](https://img.shields.io/github/downloads/sj-js/boxman/total.svg)](https://github.com/sj-js/boxman/releases)
-    [![Release](https://img.shields.io/github/release/sj-js/boxman.svg)](https://github.com/sj-js/boxman/releases)
-    [![License](https://img.shields.io/github/license/sj-js/boxman.svg)](https://github.com/sj-js/boxman/releases)
-
-    https://github.com/sj-js/boxman
+- HTML DOM객체를 자유롭게 이동시키거나 특정 영역(Box)으로 옮길 수 있습니다.
+- Source: https://github.com/sj-js/boxman
+- Document: https://sj-js.github.io/sj-js/boxman
     
       
         
-## 0. Index
+## Index
 *@* **order** *@*
 ```
 - BoxMan
@@ -27,9 +28,32 @@
 
 ## 1. Getting Started
 
-### 1-1. Load Script
+### 1-1. How to use?
 
-1. 스크립트 불러오기
+1. 라이브러리 불러오기
+    - Browser
+        ```html
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/css/boxman.css">
+        <script src="https://cdn.jsdelivr.net/gh/sj-js/crossman/dist/js/crossman.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/js/boxman.js"></script>
+        <script>
+             var boxman = new BoxMan();
+        </script>
+        ```  
+    - ES6+
+        ```bash
+        npm i @sj-js/boxman
+        ```
+        ```js
+        const BoxMan = require('@sj-js/boxman');
+        const boxman = new BoxMan();
+        ```
+
+
+
+
+### 1-2. Simple Example
+- For convenience, the following code, which loads and creates a Library in the example, is omitted.
     ```html
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/css/boxman.css">
     <script src="https://cdn.jsdelivr.net/gh/sj-js/crossman/dist/js/crossman.js"></script>
@@ -37,8 +61,8 @@
     <script>
          var boxman = new BoxMan();
     </script>
-    ```  
-    
+    ```
+  
     *@* *+prefix* *x* *@* 
     ```html
     <link rel="stylesheet" href="../boxman/boxman.css">
@@ -50,9 +74,7 @@
     ```
 
 
-
-### 1-2. Script
-
+##### Example with script          
 1. Box 생성
     ```js
     boxman.newBox({content:'BOX', width:'100px', minHeight:'35px'});
@@ -83,8 +105,7 @@
     ```
 
 
-
-### 1-3. Template          
+##### Example with template
 detect 기능을 이용하여 미리 작성한 HTML에 적용할 수 있습니다.
 
 1. Element에 다음 속성을 명시합니다.

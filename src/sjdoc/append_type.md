@@ -46,13 +46,13 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     </script>
     
     <body>
-    <div data-box>Box A</div>
-    <div data-box>Box B</div>
-    <div data-box>Box C</div>
-    
-    <div data-obj style="width:50px; height:30px;">Obj A</div>
-    <div data-obj style="width:50px; height:30px;">Obj B</div>
-    <div data-obj style="width:50px; height:30px;">Obj C</div>
+        <div data-box>Box A</div>
+        <div data-box>Box B</div>
+        <div data-box>Box C</div>
+        
+        <div data-obj style="width:50px; height:30px;">Obj A</div>
+        <div data-obj style="width:50px; height:30px;">Obj B</div>
+        <div data-obj style="width:50px; height:30px;">Obj C</div>
     </body>
     ```
   
@@ -65,13 +65,13 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     </script>
     
     <body>
-    <div data-box>Box A</div>
-    <div data-box>Box B</div>
-    <div data-box>Box C</div>
-    
-    <div data-obj>Obj A</div>
-    <div data-obj>Obj B</div>
-    <div data-obj>Obj C</div>
+        <div data-box>Box A</div>
+        <div data-box>Box B</div>
+        <div data-box>Box C</div>
+        
+        <div data-obj>Obj A</div>
+        <div data-obj>Obj B</div>
+        <div data-obj>Obj C</div>
     </body>
     ```
 
@@ -84,13 +84,13 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     </script>
     
     <body>
-    <div data-box>Box A</div>
-    <div data-box>Box B</div>
-    <div data-box>Box C</div>
-    
-    <div data-obj>Obj A</div>
-    <div data-obj>Obj B</div>
-    <div data-obj>Obj C</div>
+        <div data-box>Box A</div>
+        <div data-box>Box B</div>
+        <div data-box>Box C</div>
+        
+        <div data-obj>Obj A</div>
+        <div data-obj>Obj B</div>
+        <div data-obj>Obj C</div>
     </body>
     ```
 
@@ -103,13 +103,13 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     </script>
     
     <body>
-    <div data-box>Box A</div>
-    <div data-box>Box B</div>
-    <div data-box>Box C</div>
-    
-    <div data-obj>Obj A</div>
-    <div data-obj>Obj B</div>
-    <div data-obj>Obj C</div>
+        <div data-box>Box A</div>
+        <div data-box>Box B</div>
+        <div data-box>Box C</div>
+        
+        <div data-obj>Obj A</div>
+        <div data-obj>Obj B</div>
+        <div data-obj>Obj C</div>
     </body>
     ```
 
@@ -123,13 +123,13 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     </script>
     
     <body>
-    <div data-box>Box A</div>
-    <div data-box>Box B</div>
-    <div data-box>Box C</div>
-    
-    <div data-obj>Obj A</div>
-    <div data-obj>Obj B</div>
-    <div data-obj>Obj C</div>
+        <div data-box>Box A</div>
+        <div data-box>Box B</div>
+        <div data-box>Box C</div>
+        
+        <div data-obj>Obj A</div>
+        <div data-obj>Obj B</div>
+        <div data-obj>Obj C</div>
     </body>
     ```
 
@@ -143,12 +143,12 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     </script>
     
     <body>
-    <div data-box>Box A</div>
-    <div data-box>Box B</div>
-    <div data-box>Box C</div>
-    
-    <div data-obj>Obj A</div>
-    <div data-obj>Obj B</div>
-    <div data-obj>Obj C</div>
+        <div data-box>Box A</div>
+        <div data-box>Box B</div>
+        <div data-box>Box C</div>
+        
+        <div data-obj>Obj A</div>
+        <div data-obj>Obj B</div>
+        <div data-obj>Obj C</div>
     </body>
     ```

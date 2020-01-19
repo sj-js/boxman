@@ -1,6 +1,6 @@
 {
-  "name": "boxman",
-  "version": "1.0.2",
+  "name": "@sj-js/boxman",
+  "version": "1.0.4",
   "description": "boxman is javascript library to use GUI",
   "main": "./index.js",
   "author": "souljungkim@gmail.com",
@@ -39,6 +39,6 @@
     "open": "6.0.0"
   },
   "dependencies": {
-    "crossman": "^1.0.2"
+    "@sj-js/crossman": "^1.0.4"
   }
 }

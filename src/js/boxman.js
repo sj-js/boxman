@@ -2,7 +2,7 @@
  * [Node.js] import
  ***************************************************************************/
 try{
-    var crossman = require('crossman');
+    var crossman = require('@sj-js/crossman');
     var ready = crossman.ready,
         getEl = crossman.getEl,
         newEl = crossman.newEl,
@@ -11,8 +11,9 @@ try{
     ;
 }catch(e){}
 
-
-
+/***************************************************************************
+ * Module
+ ***************************************************************************/
 function BoxMan(setupObj){
     var that = this;
     // var modeMobile = this.isMobile();
@@ -21,7 +22,7 @@ function BoxMan(setupObj){
     this.event.setSpecialEventListener(function(element, eventName){
         if (eventName == 'external'){
             //Make Event
-            getEl(element).clas.add('sj-obj-exbox');
+            getEl(element).addClass('sj-obj-exbox');
             getEl(element).addEventListener('dragenter', that.handleDragEnter(that, element));
             getEl(element).addEventListener('dragover', that.handleDragOver(that, element));
             getEl(element).addEventListener('dragleave', that.handleDragOut(that, element));
@@ -37,7 +38,7 @@ function BoxMan(setupObj){
             cover.style.left = rect.left;
             cover.parentElement = element;
             that.cover = cover;
-            getEl(cover).clas.add('sj-obj-exbox');
+            getEl(cover).addClass('sj-obj-exbox');
             getEl(cover).addEventListener('dragenter', that.handleDragEnter(that, cover));
             getEl(cover).addEventListener('dragover', that.handleDragOver(that, cover));
             getEl(cover).addEventListener('dragleave', that.handleDragOut(that, cover));
@@ -106,8 +107,6 @@ function BoxMan(setupObj){
     if (setupObj)
         this.setup(setupObj);
 
-
-
     if (this.globalSetup.modeResize){
         window.addEventListener('resize', function () {
             that.resize();
@@ -139,6 +138,7 @@ function BoxMan(setupObj){
 try {
     module.exports = exports = BoxMan;
 } catch (e) {}
+
 
 
 
@@ -208,7 +208,6 @@ BoxMan.prototype.ready = function(afterDetectFunc){
 BoxMan.prototype.detect = function(afterDetectFunc){
     var that = this;
     ready(function(){
-    // getEl().ready(function(){
         var setupedElementList;
         /** 객체탐지 적용(담는 상자) **/
         setupedElementList = document.querySelectorAll('[data-box]');
@@ -313,11 +312,11 @@ BoxMan.prototype.handleDrop = function(that, element){
 
 
 
-/*************************
+/****************************************************************************************************
  *
  * BOX
  *
- *************************/
+ ****************************************************************************************************/
 BoxMan.prototype.addBox = function(element){
     if (element.getAttribute('data-box') == null && element.getAttribute('data-box') == undefined)
         element.setAttribute('data-box', '');
@@ -369,7 +368,7 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
         return false;
     }else{
         element.isAdaptedBox = true;
-        getEl(element).clas.add('sj-obj-box');
+        getEl(element).addClass('sj-obj-box');
     }
     //MAN ID 적용
     var manid = (infoObj.manid) ? infoObj.manid : getEl(boxObjs).getNewSeqId('tmpBox'); //TODO: manid에 대한 재정의 필요
@@ -409,8 +408,8 @@ BoxMan.prototype.setBoxView = function(infoObj){
         if (infoObj.height) element.style.height = infoObj.height;
         if (infoObj.minWidth) element.style.minWidth = infoObj.minWidth;
         if (infoObj.minHeight) element.style.minHeight = infoObj.minHeight;
-        if (infoObj.class) getEl(element).clas.add(infoObj.class);
-        if (infoObj.clazz) getEl(element).clas.add(infoObj.clazz);
+        if (infoObj.class) getEl(element).addClass(infoObj.class);
+        if (infoObj.clazz) getEl(element).addClass(infoObj.clazz);
         if (infoObj.content) element.innerHTML = infoObj.content;
     }
 };
@@ -700,11 +699,12 @@ BoxMan.prototype.suspendBox = function(suspendedBox, suspenderBox){
 
 
 
-/*************************
+
+/****************************************************************************************************
  *
  * OBJ
  *
- *************************/
+ ****************************************************************************************************/
 BoxMan.prototype.addObj = function(element){
     var infoObj = {
         manid:element.getAttribute('data-obj-id')
@@ -751,7 +751,7 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
         return false;
     }else{
         element.isAdaptedMovable = true;
-        getEl(element).clas.add('sj-obj-movable');
+        getEl(element).addClass('sj-obj-movable');
     }
     // 적용시작
     var that = this;
@@ -1070,12 +1070,11 @@ BoxMan.prototype.getDecidedBox = function(mvObj, boxObjs, lastPosX, lastPosY){
     var decidedFixedBoxLevel = 0;
     var decidedPopManIndex = 0;
     /** 현재 마우스 위치의 박스객체 모으기 **/
-    lastPosX -= getEl().getBodyScrollX();
-    lastPosY -= getEl().getBodyScrollY();
+    // lastPosX -= getEl().getBodyScrollX();
+    // lastPosY -= getEl().getBodyScrollY();
     for (var boxNm in boxObjs){
         var element = boxObjs[boxNm].element;
-        // console.error('>>', element.id, element);
-        if(this.isInBox(element, lastPosX, lastPosY) && mvObj != element){
+        if (mvObj != element && this.isInBox(element, lastPosX, lastPosY)){
             mvObjOnThisBoxObjs.push(element);
         }
     }
@@ -1741,9 +1740,11 @@ BoxMan.prototype.overWriteAndSwapPreview = function(goingToBeInThisBox, appendTy
 
 
 
-/*****
+/****************************************************************************************************
+ *
  * 기타 공통 모듈
- *****/
+ *
+ ****************************************************************************************************/
 // /* 모바일여부 확인 */
 // BoxMan.prototype.isMobile = function(force){
 //     if (force)
@@ -1800,15 +1801,18 @@ BoxMan.prototype.setLastPos = function(event){
  * 의존 : getBoundingClientRect()  */
 BoxMan.prototype.isInBox = function (target, objX, objY){
     // var targetBodyOffset = getEl(target).getBoundingClientRect();
-    var targetBodyOffset = getEl(target).getBoundingOffsetRect();
+    var targetBodyOffset = getEl(target).getBoundingPageRect();
+    // var targetBodyOffset = getEl(target).getBoundingOffsetRect();
     var targetBodyOffsetX = targetBodyOffset.left;
     var targetBodyOffsetY = targetBodyOffset.top;
+    var targetBodyOffsetW = targetBodyOffset.width;
+    var targetBodyOffsetH = targetBodyOffset.height;
 
-    // console.error(targetBodyOffsetX, targetBodyOffsetY, objX+'/'+objY);
+    // console.log(target.id, targetBodyOffsetX+'/'+targetBodyOffsetY, objX+'/'+objY);
 
     /* 상자 안인지 판정 */
-    if (targetBodyOffsetX < objX && targetBodyOffsetX + target.offsetWidth > objX
-    && targetBodyOffsetY < objY && targetBodyOffsetY + target.offsetHeight > objY){
+    if (targetBodyOffsetX < objX && targetBodyOffsetX + targetBodyOffsetW > objX
+    && targetBodyOffsetY < objY && targetBodyOffsetY + targetBodyOffsetH > objY){
         return true;
     }
     return false;
@@ -1843,90 +1847,8 @@ BoxMan.prototype.getKeyboarder = function(){
 };
 
 
-/*************************************************************
- *  BOX
- *************************************************************/
-function BoxManBox(setupObj){
-    this.limit;
-    this.acceptbox = [];
-    this.rejectbox = [];
-    this.acceptobj = [];
-    this.rejectobj = [];
-    this.conditionbox = [];
-    this.conditionobj = [];
-    this.beforeboxin;
-    this.boxinout;
-    this.start;
-    this.boxin;
-    this.boxout;
-    this.mode = new BoxManMode();
-}
-
-/*************************************************************
- *  OBJ
- *************************************************************/
-function BoxManObj(setupObj){
-}
-
-/*************************************************************
- *  EXBOX
- *************************************************************/
-function BoxManExBox(setupObj){
-}
 
 
-/*************************************************************
- *  MODE
- *************************************************************/
-function BoxManMode(modes){
-    this.modes = {};
-    this.set(modes);
-}
-BoxManMode.prototype = {
-    set: function(param){
-        if (param instanceof Object){
-            for (var modeName in param){
-                this.modes[modeName] = param[modeName];
-            }
-        }else if (typeof param == 'string'){
-            this.modes[param] = true;
-        }
-        return this;
-    },
-    get: function(modeName){
-        return this.modes[modeName];
-    },
-    del: function(modeName){
-        delete this.modes[modeName];
-        return this;
-    },
-    toggle: function(modeName){
-        var mode = this.modes[modeName];
-        if (this.modes[modeName] != undefined && this.modes[modeName] != null){
-            if (typeof mode == 'boolean')
-                this.modes[modeName] = !mode;
-        }
-        return this;
-    },
-    clear:function(){
-        this.modes = {};
-        return this;
-    },
-    clone: function(){
-        return new BoxManMode(this.modes);
-    },
-    merge: function(mode){
-        if (mode instanceof BoxManMode){
-            var targetModes = mode.modes;
-            for (var modeName in targetModes){
-                this.modes[modeName] = targetModes[modeName];
-            }
-        }else{
-            this.set(mode);
-        }
-        return this;
-    }
-};
 
 
 /*************************************************************
@@ -1939,7 +1861,6 @@ function BoxManKeyboarder(boxMan){
     this.boxMan = boxMan;
     this.selectorBox;
     this.targetBox;
-
     this.meta = {
         goingToBeInThisBox:null,
         isEventStarted: false,
@@ -2080,6 +2001,95 @@ BoxManKeyboarder.prototype = {
             }
         }
         return result;
+    }
+};
+
+
+
+
+
+/*************************************************************
+ *  BOX //TODO: develop.. test..
+ *************************************************************/
+function BoxManBox(setupObj){
+    this.limit;
+    this.acceptbox = [];
+    this.rejectbox = [];
+    this.acceptobj = [];
+    this.rejectobj = [];
+    this.conditionbox = [];
+    this.conditionobj = [];
+    this.beforeboxin;
+    this.boxinout;
+    this.start;
+    this.boxin;
+    this.boxout;
+    this.mode = new BoxManMode();
+}
+
+/*************************************************************
+ *  OBJ //TODO: develop.. test..
+ *************************************************************/
+function BoxManObj(setupObj){
+}
+
+/*************************************************************
+ *  EXBOX //TODO: develop.. test..
+ *************************************************************/
+function BoxManExBox(setupObj){
+}
+
+
+/*************************************************************
+ *  MODE //TODO: develop.. test..
+ *************************************************************/
+function BoxManMode(modes){
+    this.modes = {};
+    this.set(modes);
+}
+BoxManMode.prototype = {
+    set: function(param){
+        if (param instanceof Object){
+            for (var modeName in param){
+                this.modes[modeName] = param[modeName];
+            }
+        }else if (typeof param == 'string'){
+            this.modes[param] = true;
+        }
+        return this;
+    },
+    get: function(modeName){
+        return this.modes[modeName];
+    },
+    del: function(modeName){
+        delete this.modes[modeName];
+        return this;
+    },
+    toggle: function(modeName){
+        var mode = this.modes[modeName];
+        if (this.modes[modeName] != undefined && this.modes[modeName] != null){
+            if (typeof mode == 'boolean')
+                this.modes[modeName] = !mode;
+        }
+        return this;
+    },
+    clear:function(){
+        this.modes = {};
+        return this;
+    },
+    clone: function(){
+        return new BoxManMode(this.modes);
+    },
+    merge: function(mode){
+        if (mode instanceof BoxManMode){
+            var targetModes = mode.modes;
+            for (var modeName in targetModes){
+                this.modes[modeName] = targetModes[modeName];
+            }
+        }else{
+            this.set(mode);
+        }
+        return this;
     }
 };
 
