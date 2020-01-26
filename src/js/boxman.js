@@ -63,10 +63,14 @@ function BoxMan(setupObj){
 
         testBoxClass: null,
         testBoxBorderWidth: '1px',
+        testBoxBorderStyle: 'solid',
         testBoxBorderColor: '#f8e',
+        testBoxBackground: '#e57bd6',
         testObjClass: null,
         testObjBorderWidth: '1px',
+        testObjBorderStyle: 'solid',
         testObjBorderColor: '#7effb4',
+        testObjBackground: '#71e3a2',
 
         defaultBox: undefined,
         modeDefaultAbsolute: true,
@@ -439,8 +443,14 @@ BoxMan.prototype.setTestViewForBox = function(infoObj, globalSetup){
         if (globalSetup.testBoxBorderWidth){
             element.style.borderWidth = globalSetup.testBoxBorderWidth;
         }
+        if (globalSetup.testBoxBorderStyle){
+            element.style.borderStyle = globalSetup.testBoxBorderStyle;
+        }
         if (globalSetup.testBoxBorderColor){
             element.style.borderColor = globalSetup.testBoxBorderColor;
+        }
+        if (globalSetup.testBoxBackground){
+            element.style.background = globalSetup.testBoxBackground;
         }
     }
 };
@@ -453,8 +463,14 @@ BoxMan.prototype.setTestViewForObj = function(infoObj, globalSetup){
         if (globalSetup.testObjBorderWidth){
             element.style.borderWidth = globalSetup.testObjBorderWidth;
         }
+        if (globalSetup.testObjBorderStyle){
+            element.style.borderStyle = globalSetup.testObjBorderStyle;
+        }
         if (globalSetup.testObjBorderColor){
             element.style.borderColor = globalSetup.testObjBorderColor;
+        }
+        if (globalSetup.testObjBackground){
+            element.style.background = globalSetup.testObjBackground;
         }
     }
 };
