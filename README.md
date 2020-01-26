@@ -13,9 +13,9 @@
 
 1. Load
     ```html
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/css/boxman.css">
-    <script src="https://cdn.jsdelivr.net/gh/sj-js/crossman/dist/js/crossman.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/js/boxman.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
     <script>
          var boxman = new BoxMan();
     </script>
@@ -36,20 +36,21 @@
     <!DOCTYPE html>
     <HTML>
         <head>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/css/boxman.css">
-            <script src="https://cdn.jsdelivr.net/gh/sj-js/crossman/dist/js/crossman.js"></script>
-            <script src="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/js/boxman.js"></script>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
+            <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
             <script>
                 var boxman = new BoxMan();
             </script>
             <style>
-                div[data-obj] { display:inline-block; }
-                div[data-box].test-a { background:pink; border:1px solid black; min-width:200px; min-height:30px;}
-                div[data-obj].test-a { background:deeppink; border:1px solid black; min-width:50px; min-height:30px;}
+                div[data-box] { display:block; width:200px; min-height:30px;}
+                div[data-obj] { display:inline-block; min-width:50px; min-height:30px;}
+                div[data-box].test-a { background:pink; border:1px solid black; }
+                div[data-obj].test-a { background:deeppink; border:1px solid black; }
             </style>
         </head>
         <body>
-            Hello Boxman
+            Hello Boxman<br/>
         </body>
         <script>
             boxman.setTheme('default');

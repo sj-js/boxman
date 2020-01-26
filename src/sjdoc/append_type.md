@@ -14,10 +14,12 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
 #### ※ 자동적용
 - 편의를 위해서 예제에서는 다음 코드가 생략되어 있습니다.
     ```html
-    <style>
-        div[data-box] {width:200px; min-height:30px;}
-        div[data-obj] {width:50px; height:30px;}
-    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
+    <script>
+        var boxman = new BoxMan().setTheme('test-1');
+    </script>
     ```
     
     *@* *+prefix* *x* *@* 
@@ -25,14 +27,9 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     <link rel="stylesheet" href="../boxman/boxman.css">
     <script src="../crossman/crossman.js"></script>
     <script src="../boxman/boxman.js"></script>
-    <script>
-        var boxman = new BoxMan();
+    <script> 
+        var boxman = new BoxMan().setTheme('test-1');
     </script>
-  
-    <style>
-        div[data-box] {width:200px; min-height:30px;}
-        div[data-obj] {width:50px; height:30px;}
-    </style>
     ```
 
 
@@ -42,7 +39,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *!* *@*
     ```html
     <script>
-      var boxman = new BoxMan({appendType:BoxMan.APPEND_TYPE_LAST}).detect();     
+        boxman.setup({appendType:BoxMan.APPEND_TYPE_LAST}).detect();     
     </script>
     
     <body>
@@ -61,7 +58,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *!* *@*
     ```html
     <script>
-      var boxman = new BoxMan({appendType:BoxMan.APPEND_TYPE_FIRST}).detect();     
+        boxman.setup({appendType:BoxMan.APPEND_TYPE_FIRST}).detect();     
     </script>
     
     <body>
@@ -80,7 +77,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *!* *@*
     ```html
     <script>
-      var boxman = new BoxMan({appendType:BoxMan.APPEND_TYPE_BETWEEN}).detect();     
+        boxman.setup({appendType:BoxMan.APPEND_TYPE_BETWEEN}).detect();     
     </script>
     
     <body>
@@ -99,7 +96,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *!* *@*
     ```html
     <script>
-      var boxman = new BoxMan({appendType:BoxMan.APPEND_TYPE_OVERWRITE}).detect();     
+        boxman.setup({appendType:BoxMan.APPEND_TYPE_OVERWRITE}).detect();     
     </script>
     
     <body>
@@ -119,7 +116,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *!* *@*
     ```html
     <script>
-      var boxman = new BoxMan({appendType:BoxMan.APPEND_TYPE_SWAP}).detect();     
+        boxman.setup({appendType:BoxMan.APPEND_TYPE_SWAP}).detect();     
     </script>
     
     <body>
@@ -139,7 +136,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *!* *@*
     ```html
     <script>
-      var boxman = new BoxMan({appendType:BoxMan.APPEND_TYPE_INVISIBLE}).detect();     
+        boxman.setup({appendType:BoxMan.APPEND_TYPE_INVISIBLE}).detect();     
     </script>
     
     <body>

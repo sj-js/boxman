@@ -4,10 +4,12 @@
 #### ※ 자동적용
 - 편의를 위해서 예제에서는 다음 코드가 생략되어 있습니다.
     ```html
-    <style>
-        div[data-box] {width:200px; min-height:30px;}
-        div[data-obj] {width:50px; height:30px;}
-    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
+    <script>
+        var boxman = new BoxMan().setTheme('test-1');
+    </script>
     ```
     
     *@* *+prefix* *x* *@* 
@@ -15,14 +17,9 @@
     <link rel="stylesheet" href="../boxman/boxman.css">
     <script src="../crossman/crossman.js"></script>
     <script src="../boxman/boxman.js"></script>
-    <script>
-        var boxman = new BoxMan();
+    <script> 
+        var boxman = new BoxMan().setTheme('test-1');
     </script>
-  
-    <style>
-        div[data-box] {width:200px; min-height:30px;}
-        div[data-obj] {width:50px; height:30px;}
-    </style>
     ```
 
 
@@ -32,7 +29,7 @@
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan({modeTest: true}).detect();     
+        boxman.setup({modeTest: true}).detect();     
     </script>
     <body>
         <div data-box>BOX A</div>
@@ -53,3 +50,5 @@
 ## getExBox(exbox)
 ## getObjListByBox(box)
 ## getObjsByBox(box)
+
+## sortObjInBox(box, orderList)

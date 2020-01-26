@@ -15,10 +15,12 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
 #### ※ 자동적용
 - 편의를 위해서 예제에서는 다음 코드가 생략되어 있습니다.
     ```html
-    <style>
-        div[data-box] {width:200px; min-height:30px;}
-        div[data-obj] {width:50px; height:30px;}
-    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
+    <script>
+        var boxman = new BoxMan().setTheme('test-1');
+    </script>
     ```
     
     *@* *+prefix* *x* *@* 
@@ -26,14 +28,9 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     <link rel="stylesheet" href="../boxman/boxman.css">
     <script src="../crossman/crossman.js"></script>
     <script src="../boxman/boxman.js"></script>
-    <script>
-        var boxman = new BoxMan();
+    <script> 
+        var boxman = new BoxMan().setTheme('test-1');
     </script>
-  
-    <style>
-        div[data-box] {width:200px; min-height:30px;}
-        div[data-obj] {width:50px; height:30px;}
-    </style>
     ```
 
 
@@ -43,7 +40,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect(function(boxman){
+        boxman.detect(function(boxman){
             boxman.newBox({id:'boxA', content:'Box A', limit:1});
             boxman.newBox({id:'boxB', content:'Box B', limit:2});
             boxman.newBox({id:'boxC', content:'Box C'});
@@ -63,7 +60,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect();     
+        boxman.detect();     
     </script>
     <body>
         <div data-box data-limit="1">Box A</div>
@@ -85,7 +82,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect(function(boxman){
+        boxman.detect(function(boxman){
             boxman.newBox({id:'boxA', content:'Box A'});
             boxman.newBox({id:'boxB', content:'Box B'});
             boxman.newBox({id:'boxC', content:'Box C'});
@@ -108,7 +105,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect();     
+        boxman.detect();     
     </script>
     <body>
         <div id="boxA" data-box data-accept-box="boxB boxC">Box A</div>
@@ -130,7 +127,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect(function(boxman){
+        boxman.detect(function(boxman){
             boxman.newBox({id:'boxA', content:'Box A'});
             boxman.newBox({id:'boxB', content:'Box B'});
             boxman.newBox({id:'boxC', content:'Box C'});
@@ -153,7 +150,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect();     
+        boxman.detect();     
     </script>
     <body>
         <div id="boxA" data-box data-accept-obj="objA objB">Box A</div>
@@ -175,7 +172,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect(function(boxman){
+        boxman.detect(function(boxman){
             boxman.newBox({id:'boxA', content:'Box A'});
             boxman.newBox({id:'boxB', content:'Box B'});
             boxman.newBox({id:'boxC', content:'Box C'});
@@ -198,7 +195,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect();     
+        boxman.detect();     
     </script>
     <body>
         <div data-box id="boxA" data-reject-box="boxB boxC">Box A</div>
@@ -220,7 +217,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect(function(boxman){
+        boxman.detect(function(boxman){
             boxman.newBox({id:'boxA', content:'Box A'});
             boxman.newBox({id:'boxB', content:'Box B'});
             boxman.newBox({id:'boxC', content:'Box C'});
@@ -243,7 +240,7 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
     *@* *!* *@*
     ```html
     <script>
-        var boxman = new BoxMan().detect();     
+        boxman.detect();     
     </script>
     <body>
         <div data-box id="boxA" data-reject-obj="objA objB">Box A</div>

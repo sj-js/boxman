@@ -32,9 +32,9 @@
 ### 1-1. How to load?
 - Browser
     ```html
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/css/boxman.css">
-    <script src="https://cdn.jsdelivr.net/gh/sj-js/crossman/dist/js/crossman.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/js/boxman.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
     <script>
          var boxman = new BoxMan();
     </script>
@@ -77,12 +77,13 @@ For convenience, 1-1 code, which loads and creates a Library in the example, is 
     *@* *!* *@*
     ```html
     <style>
-        div[data-obj] { display:inline-block; }
-        div[data-box].test-a { background:pink; border:1px solid black; min-width:200px; min-height:30px;}
-        div[data-obj].test-a { background:deeppink; border:1px solid black; min-width:50px; min-height:30px;}
+        div[data-box] { display:block; width:200px; min-height:30px;}
+        div[data-obj] { display:inline-block; min-width:50px; min-height:30px;}        
+        div[data-box].test-a { background:pink; border:1px solid black;}
+        div[data-obj].test-a { background:deeppink; border:1px solid black;}
     </style>
     <body>
-        Hello Boxman
+        Hello Boxman<br/>
     </body>
     <script>        
         boxman.setTheme('default');
@@ -112,19 +113,22 @@ For convenience, 1-1 code, which loads and creates a Library in the example, is 
     *@* *!* *@*
     ```html
     <style>
+        div[data-box] { display:block; width:200px; min-height:30px;}
+        div[data-obj] { display:inline-block; min-width:50px; min-height:30px;}
         div[data-box].test-a { background:pink; border:1px solid black; }
         div[data-obj].test-a { background:deeppink; border:1px solid black; }
     </style>
     <script>
-        boxman.detect();     
+        boxman.setTheme('default').detect();     
     </script>
     <body>
-        Hello BoxMan! (Template)
-        <div data-box data-theme="default" style="width:200px; min-height:30px;">BOX A</div>
-        <div data-box class="test-a" style="width:200px; min-height:30px;">BOX B</div>
-        <div data-obj class="test-a" style="width:50px; height:30px;">A</div>  
-        <div data-obj class="test-a" style="width:50px; height:30px;">B</div>  
-        <div data-obj class="test-a" style="width:50px; height:30px;">C</div>    
+        Hello BoxMan! (Template)<br/>
+        <div data-box data-theme="test-1" class="test-a">BOX A</div>
+        <div data-box>BOX B</div>
+        <div data-obj>A</div>  
+        <div data-obj>B</div>  
+        <div data-obj class="test-a">C</div>
+        <div data-obj class="test-a">C</div>
     </body>
     ```
   
