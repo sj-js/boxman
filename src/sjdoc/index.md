@@ -32,9 +32,9 @@
 ### 1-1. How to load?
 - Browser
     ```html
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
-    <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/npm/@sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/js/boxman.js"></script>
     <script>
          var boxman = new BoxMan();
     </script>

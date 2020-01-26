@@ -15,9 +15,9 @@ rejectobj | 특정 Obj를 이동을 거부하도록 지정합니다.
 #### ※ 자동적용
 - 편의를 위해서 예제에서는 다음 코드가 생략되어 있습니다.
     ```html
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/css/boxman.css">
-    <script src="https://cdn.jsdelivr.net/npm/sj-js/crossman/dist/js/crossman.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sj-js/boxman/dist/js/boxman.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/css/boxman.css">
+    <script src="https://cdn.jsdelivr.net/npm/@sj-js/crossman/dist/js/crossman.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/js/boxman.js"></script>
     <script>
         var boxman = new BoxMan().setTheme('test-1');
     </script>
