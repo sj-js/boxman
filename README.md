@@ -4,13 +4,14 @@
 [![All Download](https://img.shields.io/github/downloads/sj-js/boxman/total.svg)](https://github.com/sj-js/boxman/releases)
 [![Release](https://img.shields.io/github/release/sj-js/boxman.svg)](https://github.com/sj-js/boxman/releases)
 [![License](https://img.shields.io/github/license/sj-js/boxman.svg)](https://github.com/sj-js/boxman/releases)
-(Detail: https://sj-js.github.io/sj-js/boxman)
+
+✨ Detail: https://sj-js.github.io/sj-js/boxman
 
 
 
 ## Getting Started
 
-1. Script
+1. Load
     ```html
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sj-js/boxman/dist/css/boxman.css">
     <script src="https://cdn.jsdelivr.net/gh/sj-js/crossman/dist/js/crossman.js"></script>
