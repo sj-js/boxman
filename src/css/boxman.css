@@ -1,15 +1,9 @@
-/*************************
-BoxMan Test
-*************************/
-body div[data-box] { background:#cccccc; border:1px solid black; }
-body div[data-obj] { background:#aaaaaa; border:1px solid black; cursor:pointer; }
-body div[data-obj-previewer] { opacity: .5; }
+div[data-box] { }
+div[data-obj] { cursor:pointer; }
 
+div[data-box][data-theme=default] { background:#cccccc; border:0px solid black; min-width:100px; min-height:50px; }
+div[data-obj][data-theme=default] { background:#aaaaaa; border:0px solid black; min-width:30px; min-height:30px; }
 
-
-body.boxman-test-a div[data-box] { background:#cccccc; border:1px solid black; }
-body.boxman-test-a div[data-obj] { background:#aaaaaa; border:1px solid black; cursor:pointer; }
-
-body.boxman-test-b div[data-box] { background:#cccccc; border:1px solid black; width:100px; }
-body.boxman-test-b div[data-obj] { background:#aaaaaa; border:1px solid black; cursor:pointer; width:30px; }
+div[data-box][data-theme=test-1] { background:#cccccc; border:1px solid black; min-width:100px; min-height:50px; }
+div[data-obj][data-theme=test-1] { background:#aaaaaa; border:1px solid black; min-width:30px; min-height:30px; }
 

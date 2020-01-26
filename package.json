@@ -1,6 +1,6 @@
 {
   "name": "@sj-js/boxman",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "boxman is javascript library to use GUI",
   "main": "./index.js",
   "author": "souljungkim@gmail.com",
@@ -14,6 +14,9 @@
     "type": "git",
     "url": "https://github.com/sj-js/boxman.git",
     "web": "https://github.com/sj-js/boxman"
+  },
+  "dependencies": {
+    "@sj-js/crossman": "^1.0.5"
   },
   "devDependencies": {
     "gulp": "^4.0.2",
@@ -37,8 +40,5 @@
     "lodash": "4.17.13",
     "lodash.template": "4.5.0",
     "open": "6.0.0"
-  },
-  "dependencies": {
-    "@sj-js/crossman": "^1.0.4"
   }
 }

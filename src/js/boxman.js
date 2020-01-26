@@ -46,6 +46,7 @@ function BoxMan(setupObj){
         }
     });
     this.keyboarder = new BoxManKeyboarder(this);
+    this.theme;
 
     this.objs = {};
     this.boxObjs = {};
@@ -162,6 +163,13 @@ BoxMan.prototype.setup = function(options){
     }
     return this;
 };
+
+BoxMan.prototype.setTheme = function(themeName){
+    this.theme = themeName;
+    return this;
+};
+
+
 
 /*************************
  *
@@ -337,8 +345,14 @@ BoxMan.prototype.addBox = function(element){
         external:element.getAttribute('data-event-external')
     });
 };
-BoxMan.prototype.newBox = function(infoObj){
-    var newElement = newEl('div', {'data-box':'true'}, '').returnElement();
+BoxMan.prototype.newBox = function(infoObj, attributes){
+    //Create New Element
+    if (!attributes)
+        attributes = {};
+
+    attributes['data-box'] = 'true';
+
+    var newElement = newEl('div', attributes, '').returnElement();
     var parentElement;
     if (!infoObj){
         infoObj = { parent: document.body };
@@ -381,6 +395,9 @@ BoxMan.prototype.setBox = function(element, infoObj, parentElement){
     this.boxObjs[manid].id = id;
     this.boxObjs[manid].manid = manid;
     this.boxObjs[manid].mode = new BoxManMode();
+    if (!getEl(element).attr('data-theme') && this.theme)
+        getEl(element).attr('data-theme', this.theme);
+
     //Global & Local 설정
     var g = this.globalSetupForBox;
     var o = (infoObj) ? infoObj : {};
@@ -410,7 +427,7 @@ BoxMan.prototype.setBoxView = function(infoObj){
         if (infoObj.minHeight) element.style.minHeight = infoObj.minHeight;
         if (infoObj.class) getEl(element).addClass(infoObj.class);
         if (infoObj.clazz) getEl(element).addClass(infoObj.clazz);
-        if (infoObj.content) element.innerHTML = infoObj.content;
+        if (infoObj.content) getEl(element).html(infoObj.content);
     }
 };
 BoxMan.prototype.setTestViewForBox = function(infoObj, globalSetup){
@@ -767,6 +784,8 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
     this.objs[manid].element = element;
     this.objs[manid].id = element.id;
     this.objs[manid].manid = manid;
+    if (!getEl(element).attr('data-theme') && this.theme)
+        getEl(element).attr('data-theme', this.theme);
 
     // Element 설정
     var g = this.globalSetupForObj;
@@ -783,7 +802,7 @@ BoxMan.prototype.setObj = function(element, infoObj, parentElement){
         if (o.minHeight) element.style.minHeight = o.minHeight;
         if (o.class) getEl(element).addClass(o.class);
         if (o.clazz) getEl(element).addClass(o.clazz);
-        if (o.content) element.innerHTML = o.content;
+        if (o.content) getEl(element).html(o.content);
     }
     element.style.left = element.offsetLeft + 'px';
     element.style.top = element.offsetTop + 'px';
@@ -917,7 +936,18 @@ BoxMan.prototype.getObjAttributeListByBox = function(element){
     }
     return resultList;
 };
-
+BoxMan.prototype.sortObjInBox = function(box, orderList){
+    var objList = this.getObjListByBox(box);
+    var objs = this.getObjsByBox(box);
+    if (orderList && objList.length > 1){
+        for (var i=orderList.length -1, order, beforeOrder; i> -1 +1; i--){
+            order = orderList[i];
+            beforeOrder = orderList[i -1];
+            getEl(objs[beforeOrder].element).appendToFrontOf(objs[order].element);
+        }
+    }
+    return this;
+};
 
 
 BoxMan.prototype.moveAllToOtherBox = function(fromBox, toBox){
