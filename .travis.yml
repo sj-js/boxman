@@ -18,7 +18,7 @@ deploy:
   - provider: releases
     api_key:
       secure: "jOUtsDPNRFMfJ4OyeHnAOb8feHmD1uCo4u0f4E3MR32VBG7SvVc3JSFUG+27NpM6BGlsJKIlGYHH9gyTrTLFQlxlbMzLKZGZ4OyeBm7pa/FmBYUrrmEAdy1RTZe5HogcccxMP/ByRYqLYOCef2ZQNbH3A7MWBKLUorkVrnOrJ82DPTRHOpP9FQ7AwcitHNxUE6uyTgVLjXJakmLLQTlkHMedIglSNSBSaMdwtkvsCd16b7Lo/5eSIKhOTh5KFDzxndrqzfNGPU9asAbBMmt0ZO1NQg/m5CjQeJmajYEMelsZsUQKDvRKxKN2bO2OFm9p8n0gSAoF4sD/mwWfmEQm5BvgjgHExvEzGZQvRskhUhR0G/xq216rtsREmxEe6+zzixviaizjjyMc3NKNUK6j3ZIIljlgjI8IXGSmgb+0DiBGCrIBy9tP2NMAKw10yesmW+ZqLGMRyi/j0bgqo4GmbCOp1SvRrhhOv9U7MrTnI51BrhR61U8c9H/EsWUUK4OPx0IGCaJTRwXtY+3qfcvHhk7eErGwKmJK/YkONIrTRxBjmpBNRmdDNsTL6Gq/DmKicZDuD3gti4KE4lzjgqd6RYygNzxtXhpKqN+ZbCCeTm2V/Uiirb4b/X0PIkd+v5n64+DaNX5H62KgEnvxMwBz7cOXvwkIiSRJ5qkAuzxAI6E="
-    file: dist/js/boxman.min.js
+    file: dist/**/*
     skip_cleanup: true
     on:
       repo: sj-js/boxman
