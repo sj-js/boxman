@@ -1,6 +1,6 @@
 {
   "name": "@sj-js/boxman",
-  "version": "1.0.5",
+  "version": "1.0.5.2",
   "description": "boxman is javascript library to use GUI",
   "main": "./index.js",
   "author": "souljungkim@gmail.com",
