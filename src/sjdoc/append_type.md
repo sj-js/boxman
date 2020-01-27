@@ -14,9 +14,9 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
 #### ※ 자동적용
 - 편의를 위해서 예제에서는 다음 코드가 생략되어 있습니다.
     ```html
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/css/boxman.css">
-    <script src="https://cdn.jsdelivr.net/npm/@sj-js/crossman/dist/js/crossman.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/js/boxman.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/css/boxman.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@sj-js/crossman/dist/js/crossman.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/js/boxman.min.js"></script>
     <script>
         var boxman = new BoxMan().setTheme('test-1');
     </script>
@@ -25,7 +25,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *+prefix* *x* *@* 
     ```html
     <link rel="stylesheet" href="../boxman/boxman.css">
-    <script src="../crossman/crossman.js"></script>
+    <script src="../crossman/crossman.min.js"></script>
     <script src="../boxman/boxman.js"></script>
     <script> 
         var boxman = new BoxMan().setTheme('test-1');
