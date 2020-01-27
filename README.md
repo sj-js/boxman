@@ -13,28 +13,37 @@
 
 
 ## Getting Started
-
-1. Load
-    ```html
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/css/boxman.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@sj-js/crossman/dist/js/crossman.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/js/boxman.min.js"></script>
-    <script>
-         var boxman = new BoxMan();
-    </script>
-    ```  
-
-2. Make BOX 
+0. Load
+    - Browser 
+        ```html
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/css/boxman.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/@sj-js/crossman/dist/js/crossman.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@sj-js/boxman/dist/js/boxman.min.js"></script>
+        <script>
+             var boxman = new BoxMan();
+        </script>
+        ```  
+    - ES6+
+        ```bash
+        npm i @sj-js/boxman
+        ```
+        ```js
+        require('@sj-js/boxman/dist/css/boxman.css');
+        const BoxMan = require('@sj-js/boxman');
+        const boxman = new BoxMan();
+        ```
+        
+1. Make BOX 
     ```js
     boxman.newBox({content:'BOX', width:'100px', minHeight:'35px'});
     ```
 
-3. Make OBJ
+2. Make OBJ
     ```js
     boxman.newObj({content:'OBJ', width:'50px', height:'30px'});
     ```
     
-4. Simple Example
+3. Simple Example
     ```html
     <!DOCTYPE html>
     <HTML>
