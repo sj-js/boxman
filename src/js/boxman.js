@@ -91,6 +91,7 @@ function BoxMan(setupObj){
         isOnMoving:false,
         lastPosX:0,
         lastPosY:0,
+        latestDownTime: null,
         mvObjPreviewClone:undefined,
         mvObjPreviewOriginalClone:undefined,
         mvObjStartBodyOffset:undefined,
@@ -995,6 +996,7 @@ BoxMan.prototype.whenMouseDown = function(event){
     var meta = this.metaObj;
     meta.isOnMoving = false;
     meta.statusTouch = !!(event.touches);
+    meta.latestDownTime = new Date().getTime();
     return true;
 };
 
@@ -1072,6 +1074,11 @@ BoxMan.prototype.whenMouseUp = function (event){
     }
     /*** 아래는 이동중이던 객체에게 적용 ***/
     if (meta.isOnMoving){
+        //[Naver Whale]에서는 클릭만했는데 마우스 무브 했던 것을 인식.. 을 방지!
+        //또한 사람이 마우스조작할 때 미세한 움직임 실수 방지
+        if (new Date().getTime() - meta.latestDownTime < 200){
+            getEl(mvObj).trigger('click');
+        }
         // console.log('mouseup (moving)> ');
         // mvObj가 이동할 박스객체 하나 선정
         var objInfo = this.getObj(mvObj);
