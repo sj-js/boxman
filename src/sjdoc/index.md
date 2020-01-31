@@ -83,7 +83,7 @@ For convenience, 1-1 code, which loads and creates a Library in the example, is 
         div[data-obj].test-a { background:deeppink; border:1px solid black;}
     </style>
     <body>
-        Hello Boxman<br/>
+        Drag & Drop A, B, C, D<br/>
     </body>
     <script>        
         boxman.setTheme('default');
@@ -92,7 +92,7 @@ For convenience, 1-1 code, which loads and creates a Library in the example, is 
         boxman.newObj({content:'A'});
         boxman.newObj({content:'B'});
         boxman.newObj({content:'C', class:'test-a'});
-        boxman.newObj({content:'G', class:'test-a'});
+        boxman.newObj({content:'D', class:'test-a'});
     </script>
     ```
 
@@ -122,13 +122,13 @@ For convenience, 1-1 code, which loads and creates a Library in the example, is 
         boxman.setTheme('default').detect();     
     </script>
     <body>
-        Hello BoxMan! (Template)<br/>
+        Drag & Drop A, B, C, D<br/>
         <div data-box data-theme="test-1" class="test-a">BOX A</div>
         <div data-box>BOX B</div>
         <div data-obj>A</div>  
         <div data-obj>B</div>  
         <div data-obj class="test-a">C</div>
-        <div data-obj class="test-a">C</div>
+        <div data-obj class="test-a">D</div>
     </body>
     ```
   
