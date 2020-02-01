@@ -1605,6 +1605,7 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     /** 가는 위치 미리 보여주기 **/
     var goingToBeInThisBox = this.getDecidedBox(mvObj, this.boxObjs, meta.lastPosX, meta.lastPosY);
     var boxEl = (goingToBeInThisBox) ? goingToBeInThisBox : (this.globalSetup.defaultBox) ? this.globalSetup.defaultBox : document.body;
+    goingToBeInThisBox = (goingToBeInThisBox) ? goingToBeInThisBox : boxEl; //임시처리
     var bfBoxInfo = this.getBox(mvObjBeforeBox);
     var afBoxInfo = this.getBox(boxEl);
     var objInfo = this.getObj(mvObj);
