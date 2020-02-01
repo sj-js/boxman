@@ -25,7 +25,7 @@ BoxMan.APPEND_TYPE_INVISIBLE | 옴겨지지 않고 노드를 바로 제거합니
     *@* *+prefix* *x* *@* 
     ```html
     <link rel="stylesheet" href="../boxman/boxman.css">
-    <script src="../crossman/crossman.min.js"></script>
+    <script src="../crossman/crossman.js"></script>
     <script src="../boxman/boxman.js"></script>
     <script> 
         var boxman = new BoxMan().setTheme('test-1');
