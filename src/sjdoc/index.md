@@ -20,9 +20,9 @@
 - Append Type
 - Limit, Accept, Reject
 - Condition
+- Theme
 - Event
 - Functions
-- Theme
 - Example
 ```
 

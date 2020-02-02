@@ -2,18 +2,18 @@
 `OBJ`가 `이동함에 따라 Event`를 발생시킬 수 있습니다. 
 
 #### ※ 표
- 종류 | 특징
-------|-----
-start | box가 생성될때
-boxin | OBJ가 해당 BOX로 들어올때
-boxout | OBJ가 해당 BOX에서 나갈때
-boxinout | OBJ가 해당 BOX로 들어오거나 나갈때 
-beforeboxin | OBJ가 해당 BOX로 들어오기 전에
-mustdo | 무조건 발생.
-external | Browser 외부로부터 파일을 끌고 왔을때
-afterdetect | 탐지(detect)를 마친 후
-swappedin | swap이 발생할때
-swappedout | swap이 발생할때
+ 종류 | Template속성 | Event Data | 설명
+------|--------------|------------|-------
+start | data-event-start | {box, obj, boxSize} | box가 생성될때
+boxin | data-event-boxin | {boxel, obj, copyObj, boxSize, boxBefore, data} | OBJ가 해당 BOX로 들어올때
+boxout | data-event-boxout | {boxel, obj, copyObj, boxSize, boxBefore, data} | OBJ가 해당 BOX에서 나갈때
+boxinout | data-event-boxinout | {boxel, obj, copyObj, boxSize, boxBefore, data} | OBJ가 해당 BOX로 들어오거나 나갈때 
+beforeboxin | data-event-beforeboxin | {box, obj, boxSize} | OBJ가 해당 BOX로 들어오기 전에
+mustdo | data-event-mustdo | null | 무조건 발생.
+external | data-event-external | Event | Browser 외부로부터 파일을 끌고 왔을때
+afterdetect | data-event-afterdetect | null | 탐지(detect)를 마친 후
+swappedin | data-event-swappedin | {boxel, obj, boxBefore} | swap이 발생할때
+swappedout | data-event-swappedout | {boxel, obj, boxBefore} | swap이 발생할때
 
 #### ※ 자동적용
 - 편의를 위해서 예제에서는 다음 코드가 생략되어 있습니다.
