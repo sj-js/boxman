@@ -20,7 +20,7 @@ function BoxMan(setupObj){
     var modeMobile = getData().isMobile;
     this.event = new SjEvent();
     this.event.setSpecialEventListener(function(element, eventName){
-        if (eventName == 'external'){
+        if (eventName == BoxMan.EVENT_EXTERNAL){
             //Make Event
             getEl(element).addClass('sj-obj-exbox');
             getEl(element).addEventListener('dragenter', that.handleDragEnter(that, element));
@@ -147,6 +147,16 @@ try {
 
 
 
+BoxMan.EVENT_START = 'start';
+BoxMan.EVENT_MUSTDO = 'mustdo';
+BoxMan.EVENT_BOXIN = 'boxin';
+BoxMan.EVENT_BOXOUT = 'boxout';
+BoxMan.EVENT_BOXINOUT = 'boxinout';
+BoxMan.EVENT_BEFOREBOXIN = 'beforeboxin';
+BoxMan.EVENT_EXTERNAL = 'external';
+BoxMan.EVENT_AFTERDETECT = 'afterdetect';
+BoxMan.EVENT_SWAPPEDIN = 'swappedin';
+BoxMan.EVENT_SWAPPEDOUT = 'swappedout';
 
 
 BoxMan.APPEND_TYPE_LAST = 1;
@@ -235,14 +245,14 @@ BoxMan.prototype.detect = function(afterDetectFunc){
         /** Run Function After Detect **/
         if (afterDetectFunc)
             afterDetectFunc(that);
-        if (that.hasEventListenerByEventName('afterdetect'))
-            that.execEventListenerByEventName('afterdetect');
+        if (that.hasEventListenerByEventName(BoxMan.EVENT_AFTERDETECT))
+            that.execEventListenerByEventName(BoxMan.EVENT_AFTERDETECT);
     });
     return this;
 };
 BoxMan.prototype.afterDetect = function(func){
     var that = this;
-    that.addEventListenerByEventName('afterdetect', func);
+    that.addEventListenerByEventName(BoxMan.EVENT_AFTERDETECT, func);
     return this;
 };
 
@@ -256,14 +266,18 @@ BoxMan.prototype.afterDetect = function(func){
  *
  *************************/
 BoxMan.prototype.addEventListener               = function(element, eventName, eventFunc){ this.event.addEventListener(element, eventName, eventFunc); return this; };
+BoxMan.prototype.addEventListenerById           = function(element, eventName, eventFunc){ this.event.addEventListenerById(element, eventName, eventFunc); return this; };
 BoxMan.prototype.addEventListenerByEventName    = function(eventName, eventFunc){ this.event.addEventListenerByEventName(eventName, eventFunc); return this; };
 BoxMan.prototype.hasEventListener               = function(element, eventName, eventFunc){ return this.event.hasEventListener(element, eventName, eventFunc); };
+BoxMan.prototype.hasEventListenerById           = function(element, eventName, eventFunc){ return this.event.hasEventListenerById(element, eventName, eventFunc); };
 BoxMan.prototype.hasEventListenerByEventName    = function(eventName, eventFunc){ return this.event.hasEventListenerByEventName(eventName, eventFunc); };
 BoxMan.prototype.hasEventListenerByEventFunc    = function(eventFunc){ return this.event.hasEventListenerByEventFunc(eventFunc); };
 BoxMan.prototype.removeEventListener            = function(element, eventName, eventFunc){ return this.event.removeEventListener(element, eventName, eventFunc); };
+BoxMan.prototype.removeEventListenerById        = function(element, eventName, eventFunc){ return this.event.removeEventListenerById(element, eventName, eventFunc); };
 BoxMan.prototype.removeEventListenerByEventName = function(eventName, eventFunc){ return this.event.removeEventListenerByEventName(eventName, eventFunc); };
 BoxMan.prototype.removeEventListenerByEventFunc = function(eventFunc){ return this.event.removeEventListenerByEventFunc(eventFunc); };
 BoxMan.prototype.execEventListener              = function(element, eventName, event){ return this.event.execEventListener(element, eventName, event); };
+BoxMan.prototype.execEventListenerById          = function(element, eventName, event){ return this.event.execEventListenerById(element, eventName, event); };
 BoxMan.prototype.execEventListenerByEventName   = function(eventName, event){ return this.event.execEventListenerByEventName(eventName, event); };
 BoxMan.prototype.execEvent                      = function(eventMap, eventNm, event){ return this.event.execEvent(eventMap, eventNm, event); };
 
@@ -315,7 +329,7 @@ BoxMan.prototype.handleDrop = function(that, element){
         //- Clear DragOver View
         if (element == that.cover){
             var eventElement = that.cover.parentElement;
-            that.execEventListener(eventElement, 'external', event);
+            that.execEventListener(eventElement, BoxMan.EVENT_EXTERNAL, event);
             getEl(that.cover).removeFromParent();
             // that.cover.parentNode.removeChild(that.cover);
         }
@@ -479,33 +493,33 @@ BoxMan.prototype.setBoxEvent = function(infoObj){
     var element = infoObj.element;
     //Event 추가
     if (infoObj.start){
-        // this.addEventListener(element, 'start', new Function('event', infoObj.start));
-        this.addEventListener(element, 'start', infoObj.start);
-        this.execEventListener(element, 'start', {box:element, obj:undefined, boxSize:this.getMovableObjCount(element)});
+        // this.addEventListener(element, BoxMan.EVENT_START, new Function('event', infoObj.start));
+        this.addEventListener(element, BoxMan.EVENT_START, infoObj.start);
+        this.execEventListener(element, BoxMan.EVENT_START, {box:element, obj:undefined, boxSize:this.getMovableObjCount(element)});
     }
     if (infoObj.boxin){
-        this.addEventListener(element, 'boxin', new Function('event', infoObj.boxin));
+        this.addEventListener(element, BoxMan.EVENT_BOXIN, new Function('event', infoObj.boxin));
     }
     if (infoObj.boxout){
-        this.addEventListener(element, 'boxout', new Function('event', infoObj.boxout));
+        this.addEventListener(element, BoxMan.EVENT_BOXOUT, new Function('event', infoObj.boxout));
     }
     if (infoObj.boxinout){
-        this.addEventListener(element, 'boxinout', new Function('event', infoObj.boxinout));
+        this.addEventListener(element, BoxMan.EVENT_BOXINOUT, new Function('event', infoObj.boxinout));
     }
     if (infoObj.beforeboxin){
-        this.addEventListener(element, 'beforeboxin', new Function('event', infoObj.beforeboxin));
+        this.addEventListener(element, BoxMan.EVENT_BEFOREBOXIN, new Function('event', infoObj.beforeboxin));
     }
     if (infoObj.mustdo){
-        this.addEventListener(element, 'mustdo', new Function('event', infoObj.mustdo));
+        this.addEventListener(element, BoxMan.EVENT_MUSTDO, new Function('event', infoObj.mustdo));
     }
     if (infoObj.swappedin){
-        this.addEventListener(element, 'swappedin', new Function('event', infoObj.swappedin));
+        this.addEventListener(element, BoxMan.EVENT_SWAPPEDIN, new Function('event', infoObj.swappedin));
     }
     if (infoObj.swappedout){
-        this.addEventListener(element, 'swappedout', new Function('event', infoObj.swappedout));
+        this.addEventListener(element, BoxMan.EVENT_SWAPPEDOUT, new Function('event', infoObj.swappedout));
     }
     if (infoObj.external){
-        this.addEventListener(element, 'external', new Function('event', infoObj.external));
+        this.addEventListener(element, BoxMan.EVENT_EXTERNAL, new Function('event', infoObj.external));
     }
 };
 
@@ -1407,7 +1421,7 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
     var isRollback2 = ( isTypeBetween && !canEnter && !isSameBox );
     // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));
     // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin( {box:boxEl, obj:mvObj, boxSize:this.getMovableObjCount(mvObjBeforeBox)} ));
-    var isRollbackWithEvent = (isToBox && this.hasEventListener(boxEl, 'beforeboxin') && !this.execEventListener(boxEl, 'beforeboxin', {box:boxEl, obj:mvObj, boxSize:this.getMovableObjCount(mvObjBeforeBox)} ));
+    var isRollbackWithEvent = (isToBox && this.hasEventListener(boxEl, BoxMan.EVENT_BEFOREBOXIN) && !this.execEventListener(boxEl, BoxMan.EVENT_BEFOREBOXIN, {box:boxEl, obj:mvObj, boxSize:this.getMovableObjCount(mvObjBeforeBox)} ));
     var isRemoveOutOfBox = ( modeRemoveOutOfBox && !isToBox && !isSameBox);
     var isNotOnlyToBox = ( modeOnlyBoxToBox && !isToBox && isFromBox);
     var isAcceptedBox = ( !isToBox || getEl(bfBoxInfo).isAccepted(afBoxInfo.acceptbox, afBoxInfo.rejectbox) );
@@ -1487,29 +1501,29 @@ BoxMan.prototype.moveObjTo = function(mvObj, boxEl){
         // if (mvObjBeforeBox.executeEventMustDo) mvObjBeforeBox.executeEventMustDo();
         // if (mvObjBeforeBox.executeEventBoxinout) mvObjBeforeBox.executeEventBoxinout( {boxel:boxEl, obj:mvObj, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox} );
         // if (mvObjBeforeBox.executeEventBoxout) mvObjBeforeBox.executeEventBoxout( {boxel:boxEl, obj:mvObj, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox} );
-        if (this.hasEventListener(mvObjBeforeBox, 'mustdo'))
-            this.execEventListener(mvObjBeforeBox, 'mustdo');
-        if (this.hasEventListener(mvObjBeforeBox, 'boxinout'))
-            this.execEventListener(mvObjBeforeBox, 'boxinout', {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
-        if (this.hasEventListener(mvObjBeforeBox, 'boxout'))
-            this.execEventListener(mvObjBeforeBox, 'boxout', {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
-        if (this.hasEventListener(mvObjBeforeBox, 'swappedin') && this.metaObj.mvObjOriginalShelterList.length > 0)
-            this.execEventListener(mvObjBeforeBox, 'swappedin', {boxel:mvObjBeforeBox, obj:this.metaObj.mvObjOriginalShelterList, boxBefore:boxEl});
+        if (this.hasEventListener(mvObjBeforeBox, BoxMan.EVENT_MUSTDO))
+            this.execEventListener(mvObjBeforeBox, BoxMan.EVENT_MUSTDO);
+        if (this.hasEventListener(mvObjBeforeBox, BoxMan.EVENT_BOXINOUT))
+            this.execEventListener(mvObjBeforeBox, BoxMan.EVENT_BOXINOUT, {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
+        if (this.hasEventListener(mvObjBeforeBox, BoxMan.EVENT_BOXOUT))
+            this.execEventListener(mvObjBeforeBox, BoxMan.EVENT_BOXOUT, {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:bBoxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
+        if (this.hasEventListener(mvObjBeforeBox, BoxMan.EVENT_SWAPPEDIN) && this.metaObj.mvObjOriginalShelterList.length > 0)
+            this.execEventListener(mvObjBeforeBox, BoxMan.EVENT_SWAPPEDIN, {boxel:mvObjBeforeBox, obj:this.metaObj.mvObjOriginalShelterList, boxBefore:boxEl});
     }
     if ( flagAfterBoxEvent ){
         var boxCnt = this.getMovableObjCount(boxEl);
         // if (boxEl.executeEventMustDo) boxEl.executeEventMustDo();
         // if (boxEl.executeEventBoxinout) boxEl.executeEventBoxinout( {boxel:boxEl, obj:mvObj, boxSize:boxCnt, boxBefore:mvObjBeforeBox} );
         // if (boxEl.executeEventBoxin) boxEl.executeEventBoxin( {boxel:boxEl, obj:mvObj, boxSize:boxCnt, boxBefore:mvObjBeforeBox} );
-        if (this.hasEventListener(boxEl, 'mustdo'))
-            this.execEventListener(boxEl, 'mustdo');
-        if (this.hasEventListener(boxEl, 'boxinout'))
-            this.execEventListener(boxEl, 'boxinout', {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:boxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
-        if (this.hasEventListener(boxEl, 'boxin')){
-            this.execEventListener(boxEl, 'boxin', {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:boxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
+        if (this.hasEventListener(boxEl, BoxMan.EVENT_MUSTDO))
+            this.execEventListener(boxEl, BoxMan.EVENT_MUSTDO);
+        if (this.hasEventListener(boxEl, BoxMan.EVENT_BOXINOUT))
+            this.execEventListener(boxEl, BoxMan.EVENT_BOXINOUT, {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:boxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
+        if (this.hasEventListener(boxEl, BoxMan.EVENT_BOXIN)){
+            this.execEventListener(boxEl, BoxMan.EVENT_BOXIN, {boxel:boxEl, obj:mvObj, copyObj:copyEl, boxSize:boxCnt, boxBefore:mvObjBeforeBox, data:objInfo});
         }
-        if (this.hasEventListener(boxEl, 'swappedout'))
-            this.execEventListener(boxEl, 'swappedout', {boxel:mvObjBeforeBox, obj:this.metaObj.mvObjOriginalShelterList, boxBefore:boxEl});
+        if (this.hasEventListener(boxEl, BoxMan.EVENT_SWAPPEDOUT))
+            this.execEventListener(boxEl, BoxMan.EVENT_SWAPPEDOUT, {boxel:mvObjBeforeBox, obj:this.metaObj.mvObjOriginalShelterList, boxBefore:boxEl});
     }
     /* 초기화 */
     mvObj = null;
@@ -1633,7 +1647,7 @@ BoxMan.prototype.setPreviewer = function(mvObj, event){
     var isRollback2 = ( isTypeBetween && !canEnter && !isSameBox );
     // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin(boxEl, mvObj, this.getMovableObjCount(mvObjBeforeBox)));
     // var isRollbackWithEvent = (isToBox && boxEl.executeEventBeforeboxin && !boxEl.executeEventBeforeboxin( {box:boxEl, obj:mvObj, boxSize:this.getMovableObjCount(mvObjBeforeBox)} ));
-    // var isRollbackWithEvent = (isToBox && this.hasEventListener(boxEl, 'beforeboxin') && !this.execEventListener(boxEl, 'beforeboxin', {box:boxEl, obj:mvObj, boxSize:this.getMovableObjCount(mvObjBeforeBox)} ));
+    // var isRollbackWithEvent = (isToBox && this.hasEventListener(boxEl, BoxMan.EVENT_BEFOREBOXIN) && !this.execEventListener(boxEl, BoxMan.EVENT_BEFOREBOXIN, {box:boxEl, obj:mvObj, boxSize:this.getMovableObjCount(mvObjBeforeBox)} ));
     var isRemoveOutOfBox = ( modeRemoveOutOfBox && !isToBox && !isSameBox);
     var isNotOnlyToBox = ( !isTypeBetween && modeOnlyBoxToBox && !isToBox && isFromBox);
     var isAcceptedBox = ( !isToBox || getEl(bfBoxInfo).isAccepted(afBoxInfo.acceptbox, afBoxInfo.rejectbox) );
